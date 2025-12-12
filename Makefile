@@ -1,8 +1,8 @@
 CXX = c++
-CXXFLAGS =  -Wall -Wextra -Werror -std=c++98
+CXXFLAGS =  -Wall -Wextra -Werror -std=c++98 
 NAME = webserv
 
-SRCS = 
+SRCS = ./ServerCore/ft_server.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

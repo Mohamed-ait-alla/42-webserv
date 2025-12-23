@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/21 17:57:25 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/23 13:37:39 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 #define PORT 8081
 #define IP INADDR_ANY
+#define MAX_LISTEN 4096
+#define MAX_EVENTS 1024
 
 int main() {
   // TODO: SERVER SIDE
@@ -68,7 +70,7 @@ int main() {
   // ? the second param is listen is how many request can get in same time
   // ? Maximum number of pending connections in the queue before rejecting a new
   // ? one
-  if (listen(sockfd, 10) < 0) {
+  if (listen(sockfd, MAX_LISTEN) < 0) {
     std::cerr << "listen failed" << std::endl;
     return 1;
   }
@@ -79,55 +81,78 @@ int main() {
 
   // * this creates a new epoll instance and returns a file descriptor referring
   // * to that instance.
-  // ? EPOLL_CLOEXEC
+  // ? EPOLL_CLOEXEC this mean The kernel automatically closes epfd during
+  // ? execve() ? If this process calls `execve()`, automatically close `epfd`.
   int epfd = epoll_create1(EPOLL_CLOEXEC);
   if (epfd < 0) {
     std::cerr << "epoll failed" << std::endl;
     return 1;
   }
 
-  // * rules of watch fds
+  // * epoll_event It is a structure defined by the Linux system, used to
+  // * describe an event that you want epoll to monitor or report to you.
   struct epoll_event ev;
-  ev.events = EPOLLIN; // * jatha req golha liya
-  ev.data.fd = sockfd; // * sock
+  // * Event type that we need to watch (read, write, error...)
+  ev.events = EPOLLIN; // * is ready for EPOLLIN (Read) || EPOLLOUT (Write)
+  // * Event data (usually FD)
+  ev.data.fd = sockfd; // * that will epoll_ctl return if is ready for
+                       // * (Read or Write)
 
+  // * epoll_ctl is list of fds that we need to watch it on epoll by events
+  // * rules
   if (epoll_ctl(epfd, EPOLL_CTL_ADD, sockfd, &ev) == -1) {
     std::cerr << "epoll_ctl failed" << std::endl;
     return 1;
   }
 
-  struct epoll_event events[10];
+  // * this array of struct used by epoll_wait() to store ready file descriptor
+  // * events for EPOLLIN (Read) || EPOLLOUT (Write)
+  struct epoll_event events[MAX_EVENTS];
 
   // ! accepts a new connection from a client (for servers).
-  // * The accept() function accepts a new connection from a client (for
-  // * servers). It extracts the first connection request on the queue of
-  // * pending connections and creates a new socket for that connection.
-  char buffer[4096];
+
+  // ? buffer that we store to him the request
+  char buffer[ULLONG_MAX];
   while (true) {
 
-    int n = epoll_wait(epfd, events, 10, -1);
+    // * epoll_wait fill the array events by ready fds and return the fds that's
+    // * ready for (Read) || (Write)
+    // ? -1 is arg for time out and when we use -1 that's mean we still
+    // ? wait untill get an fd
+    int n = epoll_wait(epfd, events, MAX_EVENTS, -1);
 
     if (n < 0) {
       std::cerr << "epoll_wait failed" << std::endl;
       return 1;
     }
 
+    // ! Recive request from browser
     for (int i = 0; i < n; i++) {
+      // * check if we have fd of server
       if (events[i].data.fd == sockfd) {
+        // * The accept() function accepts a new connection from a client (for
+        // * servers). It extracts the first connection request on the queue of
+        // * pending connections and creates a new socket for that connection.
         int clientFd =
             accept(sockfd, (struct sockaddr *)&sockaddr, (socklen_t *)&addrLen);
         if (clientFd < 0) {
           std::cerr << "accept failed" << std::endl;
           return 1;
         }
+
+        // * add new sockfd of client to watch mode
         struct epoll_event clientEv;
         clientEv.events = EPOLLIN;
         clientEv.data.fd = clientFd;
 
         epoll_ctl(epfd, EPOLL_CTL_ADD, clientFd, &clientEv);
-      } else if (events[i].events & EPOLLIN) {
+      } else if (events[i].events & EPOLLIN) { // * EPOLLIN or EPOLLERR
         int clientFd = events[i].data.fd;
 
+        // * The recv() function is a system call that is used to receive data
+        // * from a connected socket which allows the client or server to read
+        // * incoming messages. and is return the number of bytes that read
+        // ? 0 mean read data normaly ()
         int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
         buffer[bytesRead] = '\0';
         if (bytesRead <= 0) {
@@ -140,7 +165,7 @@ int main() {
 
         epoll_ctl(epfd, EPOLL_CTL_MOD, clientFd, &clientEv);
 
-      } else if (events[i].events & EPOLLOUT) {
+      } else if (events[i].events & EPOLLOUT) { // * EPOLLIN or EPOLLERR
         std::string request = buffer;
 
         try {
@@ -153,23 +178,5 @@ int main() {
         close(events[i].data.fd);
       }
     }
-
-    // // ! Recive request from browser
-    // // * buffer that we store to him the request
-    // char buffer[4096];
-    // // * The recv() function is a system call that is used to receive data
-    // from
-    // // * a connected socket which allows the client or server to read
-    // incoming
-    // // * messages.
-    // // * and is return the number of bytes that read
-    // int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-    // if (bytesRead > 0) {
-    //   buffer[bytesRead] = '\0';
-    //   std::cout << buffer << std::endl;
-    //   std::string request = buffer;
-    //   response(clientFd, request);
-    //   close(clientFd);
-    // }
   }
 }

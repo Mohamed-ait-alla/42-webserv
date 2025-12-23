@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/23 10:12:46 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/23 20:55:14 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,26 @@
 #define WEBSERV_HPP
 
 // * includes
+#include <climits>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
 #include <string.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <sys/epoll.h>
-#include <climits>
+
+// * MACROS
+#define PORT 8080
+#define IP INADDR_ANY
+#define MAX_LISTEN 4096
+#define MAX_BUFFER_SIZE 4096
+#define MAX_EVENTS 1024
 
 // * classes
+// ! WEBSERV
 class Webserv {
   // ! private
 private:
@@ -34,10 +43,13 @@ public:
   Webserv() {}
 
   // * Copy Constructor
-  Webserv(const Webserv &other) {}
+  Webserv(const Webserv &other) { (void)other; }
 
   // * Copy assignment operator
-  Webserv &operator=(const Webserv &other) { return *this; }
+  Webserv &operator=(const Webserv &other) {
+    (void)other;
+    return *this;
+  }
 
   // * Destructor
   ~Webserv() {}
@@ -73,8 +85,68 @@ public:
   };
 };
 
+// ! Server
+class Server : public Webserv {
+  // ! private
+private:
+  int sockfd;
+  // ! public
+public:
+  // * Default Constructor
+  Server() : sockfd(-1) {}
+
+  // * Copy Constructor
+  Server(const Server &other) : Webserv(other), sockfd(-1) {}
+
+  // * Copy assignment operator
+  Server &operator=(const Server &other) {
+    if (this != &other) {
+      this->sockfd = other.sockfd;
+    }
+    return *this;
+  }
+
+  // * Destructor
+  ~Server() {};
+
+  // * Getters & Setters
+  int getSockFd() const { return this->sockfd; };
+  void setSockFd(int value) { this->sockfd = value; };
+
+  // * Methods
+  void run();
+};
+
+// ! REQUEST
+class Request : public Webserv {
+  // ! private
+private:
+  // ! public
+public:
+  // * Default Constructor
+  Request() {}
+
+  // * Copy Constructor
+  Request(const Request &other) : Webserv(other) {}
+
+  // * Copy assignment operator
+  Request &operator=(const Request &other) {
+    if (this != &other) {
+      // logic
+    }
+    return *this;
+  }
+
+  // * Destructor
+  ~Request() {};
+
+  // * Getters & Setters
+
+  // * Methods
+};
+
 // ! RESPONSE
-class Response: public Webserv {
+class Response : public Webserv {
   // ! private
 private:
   unsigned int statusCode;
@@ -88,8 +160,8 @@ public:
 
   // * Copy Constructor
   Response(const Response &other)
-      : statusCode(other.statusCode), headers(other.headers), body(other.body) {
-  }
+      : Webserv(other), statusCode(other.statusCode), headers(other.headers),
+        body(other.body) {}
 
   // * Copy assignment operator
   Response &operator=(const Response &other) {

@@ -6,19 +6,15 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/23 13:37:39 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/23 18:45:34 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
-#define PORT 8081
-#define IP INADDR_ANY
-#define MAX_LISTEN 4096
-#define MAX_EVENTS 1024
+// * Methods
 
-int main() {
-  // TODO: SERVER SIDE
+void Server::run() {
   // ! Create a Socket
   // * A socket is one endpoint of a two way communication link between two
   // * programs running on the network.
@@ -35,8 +31,7 @@ int main() {
   // * 0 (auto)
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    std::cerr << "server is not running !" << std::endl;
-    return 1;
+    throw std::runtime_error("failed to create a socket !");
   }
 
   // ! Define a ip and port for socket
@@ -60,8 +55,7 @@ int main() {
   // * local address and port number which allows the socket to listen for
   // * incoming connection on that address.
   if (bind(sockfd, (struct sockaddr *)&sockaddr, addrLen) < 0) {
-    std::cerr << "bind failed" << std::endl;
-    return 1;
+    throw std::runtime_error("bind failed");
   }
 
   // ! Listen
@@ -71,8 +65,7 @@ int main() {
   // ? Maximum number of pending connections in the queue before rejecting a new
   // ? one
   if (listen(sockfd, MAX_LISTEN) < 0) {
-    std::cerr << "listen failed" << std::endl;
-    return 1;
+    throw std::runtime_error("listen failed");
   }
 
   // ! Monitor the client that connect to the server
@@ -86,7 +79,6 @@ int main() {
   int epfd = epoll_create1(EPOLL_CLOEXEC);
   if (epfd < 0) {
     std::cerr << "epoll failed" << std::endl;
-    return 1;
   }
 
   // * epoll_event It is a structure defined by the Linux system, used to
@@ -102,7 +94,6 @@ int main() {
   // * rules
   if (epoll_ctl(epfd, EPOLL_CTL_ADD, sockfd, &ev) == -1) {
     std::cerr << "epoll_ctl failed" << std::endl;
-    return 1;
   }
 
   // * this array of struct used by epoll_wait() to store ready file descriptor
@@ -112,7 +103,7 @@ int main() {
   // ! accepts a new connection from a client (for servers).
 
   // ? buffer that we store to him the request
-  char buffer[ULLONG_MAX];
+  char buffer[MAX_BUFFER_SIZE];
   while (true) {
 
     // * epoll_wait fill the array events by ready fds and return the fds that's
@@ -123,7 +114,6 @@ int main() {
 
     if (n < 0) {
       std::cerr << "epoll_wait failed" << std::endl;
-      return 1;
     }
 
     // ! Recive request from browser
@@ -137,7 +127,6 @@ int main() {
             accept(sockfd, (struct sockaddr *)&sockaddr, (socklen_t *)&addrLen);
         if (clientFd < 0) {
           std::cerr << "accept failed" << std::endl;
-          return 1;
         }
 
         // * add new sockfd of client to watch mode
@@ -146,36 +135,44 @@ int main() {
         clientEv.data.fd = clientFd;
 
         epoll_ctl(epfd, EPOLL_CTL_ADD, clientFd, &clientEv);
-      } else if (events[i].events & EPOLLIN) { // * EPOLLIN or EPOLLERR
-        int clientFd = events[i].data.fd;
+      } else {
+        if (events[i].events & EPOLLIN) { // * EPOLLIN or EPOLLERR
+          int clientFd = events[i].data.fd;
 
-        // * The recv() function is a system call that is used to receive data
-        // * from a connected socket which allows the client or server to read
-        // * incoming messages. and is return the number of bytes that read
-        // ? 0 mean read data normaly ()
-        int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-        buffer[bytesRead] = '\0';
-        if (bytesRead <= 0) {
-          epoll_ctl(epfd, EPOLL_CTL_DEL, clientFd, NULL);
-          close(clientFd);
+          // * The recv() function is a system call that is used to receive data
+          // * from a connected socket which allows the client or server to read
+          // * incoming messages. and is return the number of bytes that read
+          // ? 0 mean read data normaly ()
+          int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+          buffer[bytesRead] = '\0';
+          if (bytesRead <= 0) {
+            epoll_ctl(epfd, EPOLL_CTL_DEL, clientFd, NULL);
+            close(clientFd);
+          }
+          std::cout << "==========Request==========" << std::endl;
+          std::cout << buffer << std::endl;
+          // * add new sockfd of client to watch mode again
+          struct epoll_event clientEv;
+          clientEv.events = EPOLLIN | EPOLLOUT;
+          clientEv.data.fd = clientFd;
+
+          epoll_ctl(epfd, EPOLL_CTL_MOD, clientFd, &clientEv);
         }
-        struct epoll_event clientEv;
-        clientEv.events = EPOLLIN | EPOLLOUT;
-        clientEv.data.fd = clientFd;
+        if (events[i].events & EPOLLOUT) { // * EPOLLIN or EPOLLERR
+          std::string request = buffer;
 
-        epoll_ctl(epfd, EPOLL_CTL_MOD, clientFd, &clientEv);
-
-      } else if (events[i].events & EPOLLOUT) { // * EPOLLIN or EPOLLERR
-        std::string request = buffer;
-
-        try {
+          // * Response
           response(events[i].data.fd, request);
-        } catch (const std::exception &e) {
-          std::cerr << e.what() << '\n';
-        }
+          std::cout << "==========Response==========" << std::endl;
+          std::cout << request << std::endl;
 
-        epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
-        close(events[i].data.fd);
+          epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
+          close(events[i].data.fd);
+        }
+        if (events[i].data.fd & EPOLLERR) {
+          epoll_ctl(events[i].data.fd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
+          close(events[i].data.fd);
+        }
       }
     }
   }

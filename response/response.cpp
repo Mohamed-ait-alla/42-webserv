@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/23 13:27:59 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/23 20:54:04 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ void response(int clientFd, std::string req) {
 
     if (path == "/") {
       filePath += path + "index.html";
+      std::cout << filePath << "\n";
       std::ifstream file(filePath.c_str());
       if (!file.is_open()) {
         throw std::runtime_error("404 NOT FOUND !");

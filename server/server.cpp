@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/24 21:00:33 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/25 13:28:43 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,12 @@
 // * Methods
 
 void Server::run() {
+  // * Request
+  Request req;
+
+  // * Response
+  Response res;
+
   // ! Create a Socket
   // * A socket is one endpoint of a two way communication link between two
   // * programs running on the network.
@@ -139,7 +145,7 @@ void Server::run() {
 
         epoll_ctl(epfd, EPOLL_CTL_ADD, clientFd, &clientEv);
       } else {
-        if (events[i].events & EPOLLIN) { // * EPOLLIN or EPOLLERR
+        if (events[i].events & EPOLLIN) { // * EPOLLIN o r EPOLLERR
           int clientFd = events[i].data.fd;
 
           // * The recv() function is a system call that is used to receive data
@@ -153,7 +159,9 @@ void Server::run() {
             close(clientFd);
           }
           std::cout << "==========Request==========" << std::endl;
-          std::cout << buffer << std::endl;
+          std::string request = buffer;
+          std::cout << request << std::endl;
+          req.setRequest(request);
           // * add new sockfd of client to watch mode again
           struct epoll_event clientEv;
           clientEv.events = EPOLLIN | EPOLLOUT;
@@ -165,7 +173,8 @@ void Server::run() {
           std::string request = buffer;
 
           // * Response
-          response(events[i].data.fd, request);
+          // response(events[i].data.fd);
+          res.response(events[i].data.fd, req);
           std::cout << "==========Response==========" << std::endl;
           std::cout << request << std::endl;
 

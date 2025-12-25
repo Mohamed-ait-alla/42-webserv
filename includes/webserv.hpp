@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/24 21:00:06 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/25 18:43:09 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 // * includes
 #include <climits>
+#include <ctime>
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
@@ -127,6 +128,10 @@ class Request : public Webserv {
 private:
   // ! public
 public:
+  METHOD method;
+  std::string path;
+  std::string httpV;
+
   // * Default Constructor
   Request() {}
 
@@ -145,33 +150,40 @@ public:
   ~Request() {};
 
   // * Getters & Setters
+  void setRequest(const std::string &req);
+  const std::map<std::string, std::string> &getRequest() const;
 
   // * Methods
-  void parseRequest(std::string &req);
 };
 
 // ! RESPONSE
 class Response : public Webserv {
   // ! private
 private:
-  unsigned int statusCode;
+  std::string res;
+  STATUS_CODE status_code;
+  std::string statusLine;
   std::string headers;
+  static const std::string serverName;
   std::string body;
 
   // ! public
 public:
   // * Default Constructor
-  Response() : statusCode(0), headers(""), body("") {}
+  // Response()
+  //     : res(""), status_code(Webserv::NO_CONTENT), statusLine(""),
+  //     headers(""),
+  //       body("") {}
 
   // * Copy Constructor
-  Response(const Response &other)
-      : Webserv(other), statusCode(other.statusCode), headers(other.headers),
-        body(other.body) {}
+  // Response(const Response &other)
+  //     : Webserv(other), statusCode(other.statusCode), headers(other.headers),
+  //       body(other.body) {}
 
   // * Copy assignment operator
   Response &operator=(const Response &other) {
     if (this != &other) {
-      this->statusCode = other.statusCode;
+      this->status_code = other.status_code;
       this->headers = other.headers;
       this->body = other.body;
     }
@@ -182,22 +194,33 @@ public:
   ~Response() {};
 
   // * Getters & Setters
-  unsigned int getStatusCode() const { return this->statusCode; }
-  void setStatusCode(unsigned int value) { this->statusCode = value; }
+  STATUS_CODE getStatusCode() const { return this->status_code; }
+  void setStatusCode(STATUS_CODE value) { this->status_code = value; }
 
-  std::string getHeaders() const { return this->headers; }
-  void setHeaders(std::string value) { this->headers = value; }
+  std::string getStatusLine() const { return this->statusLine; }
+  void setStatusLine(const std::string httpV,
+                     const std::string &statusCodeDescription) {
+    this->statusLine = httpV + " " + statusCodeDescription + "\r\n";
+  }
+
+  // std::string getHeaders() const { return this->headers; }
+  // void setHeaders(std::string statusCode, std::string headers){
+  //     this -> headers = this->getStatusCode() + this->h}
 
   std::string getBody() const { return this->body; }
-  void setBody(std::string value) { this->body = value; }
+  void setBody(std::string &value) { this->body = value; }
+
+  std::string getRes() const { return this->res; }
+  void setRes(std::string &value) { this->res = value; }
 
   // * Methods
-  void GET_METHOD();
+  void GET_METHOD(Request &req);
   void POST_METHOD();
   void DELETE_METHOD();
+  std::string statusCodeDescription(STATUS_CODE statusCode);
+  void response(const int clientFd, Request &req);
 };
 
 // * Prototype of functions
-void response(int clientFd, std::string req);
 
 #endif

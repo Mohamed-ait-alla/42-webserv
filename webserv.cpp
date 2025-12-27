@@ -6,11 +6,35 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 08:46:45 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/27 12:03:04 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/27 18:45:18 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/webserv.hpp"
+
+// Default constructor
+Webserv::Webserv()
+{
+	this->initMimeTypes();
+}
+
+// Copy constructor
+Webserv::Webserv(const Webserv& other)
+{
+	(void)other;
+}
+
+// Copy assignment
+Webserv&	Webserv::operator=(const Webserv& other)
+{
+	(void)other;
+	return (*this);
+}
+
+// Destructor
+Webserv::~Webserv()
+{
+}
 
 void Webserv::initMimeTypes() {
   // * text

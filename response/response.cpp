@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/28 12:04:37 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/28 18:36:08 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,6 +172,18 @@ void Response::setContentType(const std::string &path) {
   this->contentType = "Content-Type: " + it->second + "\r\n";
 }
 
+// * Method Not Allowed
+void Response::methodNotAllowed(const Request &req) {
+  // * set status code
+  this->setStatusCode(METHOD_NOT_ALLOWED);
+
+  // * full path
+  std::string fullPath = "/pages/errors/404.html";
+
+  // * Generate response
+  this->generateResponse(req, fullPath);
+}
+
 // * Generate response
 void Response::generateResponse(const Request &req, std::string &path) {
   // * status line
@@ -253,8 +265,6 @@ void Response::generateResponse(const Request &req, std::string &path) {
 
 // * Response
 void Response::response(const int clientFd, const Request &req) {
-  (void)clientFd;
-
   if (req.method == GET) {
     this->GET_METHOD(req);
   } else if (req.method == POST) {
@@ -262,7 +272,7 @@ void Response::response(const int clientFd, const Request &req) {
   } else if (req.method == DELETE) {
     this->DELETE_METHOD(req);
   } else {
-    this->methodNotAllowed();
+    this->methodNotAllowed(req);
   }
 
   // * send Response

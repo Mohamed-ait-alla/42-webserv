@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/28 12:05:18 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/28 17:39:29 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ class Webserv {
   public:
     std::map<std::string, std::string> request;
     std::map<std::string, std::string> mimeTypes;
-    // std::map<std::string, std::string> response;
 
     Webserv();
     Webserv(const Webserv &other);
@@ -214,7 +213,7 @@ class Response : public Webserv {
     std::map<std::string, std::string>
     parseFormURLEncoded(const std::string &post_body);
     void generateResponse(const Request &req, std::string &path);
-    void methodNotAllowed() {};
+    void methodNotAllowed(const Request &req);
     void response(const int clientFd, const Request &req);
 };
 

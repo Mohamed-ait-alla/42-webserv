@@ -6,28 +6,18 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/28 17:47:50 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/29 10:14:21 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
-
 // Default constructor
-Server::Server()
-{
-	_sockfd = -1;
-}
+Server::Server() { _sockfd = -1; }
 
-int	Server::getSockFd() const
-{
-	return (_sockfd);
-}
+int Server::getSockFd() const { return (_sockfd); }
 
-void	Server::setSockFd(int fd)
-{
-	this->_sockfd = fd;
-}
+void Server::setSockFd(int fd) { this->_sockfd = fd; }
 
 // * Methods
 
@@ -190,7 +180,11 @@ void Server::run() {
           std::string request = buffer;
 
           // * Response
-          res.response(events[i].data.fd, req);
+          res.response(req);
+
+          // * send response
+          send(events[i].data.fd, res.getResponse().c_str(),
+               res.getResponse().length(), 0);
 
           epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
           close(events[i].data.fd);

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/28 17:39:29 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/29 11:16:31 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,19 +39,12 @@
 class Webserv {
 
   public:
-    std::map<std::string, std::string> request;
-    std::map<std::string, std::string> mimeTypes;
-
-    Webserv();
-    Webserv(const Webserv &other);
-    Webserv &operator=(const Webserv &other);
-    ~Webserv();
-
     // * ENUM
     enum METHOD {
       GET,
       POST,
       DELETE,
+      ELSE,
     };
 
     enum STATUS_CODE {
@@ -76,9 +69,6 @@ class Webserv {
       BAD_GATEWAY = 502,
       GATEWAY_TIMEOUT = 504
     };
-
-    // * member functions
-    void initMimeTypes();
 };
 
 // ******************************************************************************
@@ -108,6 +98,9 @@ class Server : public Webserv {
 
 class Request : public Webserv {
 
+  private:
+    std::map<std::string, std::string> request;
+
   public:
     METHOD method;
     std::string path;
@@ -124,8 +117,8 @@ class Request : public Webserv {
 // //
 
 class Response : public Webserv {
-    // ! private
   private:
+    std::map<std::string, std::string> mimeTypes;
     std::string res;
     STATUS_CODE status_code;
     std::string statusLine;
@@ -135,75 +128,36 @@ class Response : public Webserv {
     static const std::string serverName;
     std::string body;
 
-    // ! public
   public:
     // * Default Constructor
-    // Response()
-    //     : res(""), status_code(Webserv::NO_CONTENT), statusLine(""),
-    //     headers(""),
-    //       body("") {}
-
-    // * Copy Constructor
-    // Response(const Response &other)
-    //     : Webserv(other), statusCode(other.statusCode),
-    //     headers(other.headers),
-    //       body(other.body) {}
-
-    // * Copy assignment operator
-    Response &operator=(const Response &other) {
-      if (this != &other) {
-        this->status_code = other.status_code;
-        this->headers = other.headers;
-        this->body = other.body;
-      }
-      return *this;
-    }
-
-    // * Destructor
-    ~Response() {};
+    Response();
 
     // * Getters & Setters
-    void setStatusCode(STATUS_CODE value) { this->status_code = value; }
-    STATUS_CODE getStatusCode() const { return this->status_code; }
+    void setMimeTypes();
+    const std::map<std::string, std::string> &getMimeTypes() const;
+
+    void setStatusCode(STATUS_CODE value);
+    STATUS_CODE getStatusCode() const;
 
     void setStatusLine(const std::string httpV,
-                       const std::string &statusCodeDescription) {
-      this->statusLine = httpV + " " + statusCodeDescription + "\r\n";
-    }
-    std::string getStatusLine() const { return this->statusLine; }
+                       const std::string &statusCodeDescription);
+    std::string getStatusLine() const;
 
     void setContentType(const std::string &path);
-    std::string getContentType() const { return this->contentType; }
+    std::string getContentType() const;
 
-    void setContentLength(const std::string &body) {
-      size_t len = body.length();
-      std::stringstream ss;
-      ss << len;
-      this->contentLength = "Content-Length: " + ss.str() + "\r\n";
-    };
-    std::string getContentLength() const { return this->contentLength; }
+    void setContentLength(const std::string &body);
+    std::string getContentLength() const;
 
-    std::string getHeaders() const { return this->headers; }
-    void setHeaders() {
-      this->headers = this->getStatusLine() + this->serverName +
-                      this->getContentType() + getContentLength() + "\r\n";
-    }
+    std::string getHeaders() const;
+    void setHeaders();
 
-    void setBody(std::ifstream &file) {
-      std::string line;
-      this->body.clear();
-      while (std::getline(file, line)) {
-        this->body += line + "\n";
-      }
-      this->body += "\n\r";
-    }
-    std::string getBody() const { return this->body + "\r\n"; }
-    void addDataToBody(size_t pos, std::string &data) {
-      this->body.insert(pos, data);
-    }
+    void setBody(std::ifstream &file);
+    std::string getBody() const;
+    void addDataToBody(size_t pos, std::string &data);
 
-    void setResponse() { this->res = getHeaders() + getBody(); }
-    std::string getResponse() const { return this->res; }
+    void setResponse();
+    std::string getResponse() const;
 
     // * Methods
     void GET_METHOD(const Request &req);
@@ -214,9 +168,7 @@ class Response : public Webserv {
     parseFormURLEncoded(const std::string &post_body);
     void generateResponse(const Request &req, std::string &path);
     void methodNotAllowed(const Request &req);
-    void response(const int clientFd, const Request &req);
+    void response(const Request &req);
 };
-
-// * Prototype of functions
 
 #endif

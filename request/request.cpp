@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/27 13:15:29 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/29 09:46:14 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,14 +20,16 @@ void Request::setRequest(const std::string &req) {
   std::string line;
   if (std::getline(ss, line)) {
     std::stringstream firstLine(line);
-    std::string method;
-    firstLine >> method;
-    if (method == "GET") {
+    std::string reqMethod;
+    firstLine >> reqMethod;
+    if (reqMethod == "GET") {
       this->method = GET;
-    } else if (method == "POST") {
+    } else if (reqMethod == "POST") {
       this->method = POST;
-    } else if (method == "DELETE") {
+    } else if (reqMethod == "DELETE") {
       this->method = DELETE;
+    } else {
+      this->method = ELSE;
     }
 
     firstLine >> this->path >> this->httpV;

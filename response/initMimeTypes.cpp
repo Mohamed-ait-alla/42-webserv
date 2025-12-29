@@ -1,42 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   webserv.cpp                                        :+:      :+:    :+:   */
+/*   initMimeTypes.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/26 08:46:45 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/27 18:45:18 by mdahani          ###   ########.fr       */
+/*   Created: 2025/12/29 10:40:21 by mdahani           #+#    #+#             */
+/*   Updated: 2025/12/29 11:16:22 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "includes/webserv.hpp"
+#include "../includes/webserv.hpp"
 
-// Default constructor
-Webserv::Webserv()
-{
-	this->initMimeTypes();
-}
-
-// Copy constructor
-Webserv::Webserv(const Webserv& other)
-{
-	(void)other;
-}
-
-// Copy assignment
-Webserv&	Webserv::operator=(const Webserv& other)
-{
-	(void)other;
-	return (*this);
-}
-
-// Destructor
-Webserv::~Webserv()
-{
-}
-
-void Webserv::initMimeTypes() {
+void Response::setMimeTypes() {
   // * text
   this->mimeTypes[".html"] = "text/html";
   this->mimeTypes[".htm"] = "text/html";
@@ -164,4 +140,8 @@ void Webserv::initMimeTypes() {
   this->mimeTypes[".asf"] = "video/x-ms-asf";
   this->mimeTypes[".wmv"] = "video/x-ms-wmv";
   this->mimeTypes[".avi"] = "video/x-msvideo";
+}
+
+const std::map<std::string, std::string> &Response::getMimeTypes() const {
+  return this->mimeTypes;
 }

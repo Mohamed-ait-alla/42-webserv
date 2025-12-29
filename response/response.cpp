@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/28 18:36:08 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/29 11:26:14 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,89 @@
 
 // * initialize server name
 const std::string Response::serverName = "webserv/1.0\r\n";
+
+// * Default Constructor
+Response::Response() { this->setMimeTypes(); }
+
+// * Getters & Setters
+// * status code
+void Response::setStatusCode(STATUS_CODE value) { this->status_code = value; }
+
+Webserv::STATUS_CODE Response::getStatusCode() const {
+  return this->status_code;
+}
+
+void Response::setStatusLine(const std::string httpV,
+                             const std::string &statusCodeDescription) {
+  this->statusLine = httpV + " " + statusCodeDescription + "\r\n";
+}
+std::string Response::getStatusLine() const { return this->statusLine; }
+
+// * content type
+void Response::setContentType(const std::string &path) {
+  size_t pos = path.rfind(".");
+
+  if (pos == std::string::npos) {
+    this->contentType =
+        "Content-Type: application/octet-stream\r\n"; // * we dont know what
+    // * is the type of
+    // * content
+    return;
+  }
+
+  std::string extention = path.substr(pos);
+
+  std::map<std::string, std::string>::const_iterator it =
+      this->getMimeTypes().find(extention);
+
+  if (it == this->getMimeTypes().end()) {
+    this->contentType =
+        "Content-Type: application/octet-stream\r\n"; // * we dont know what
+    // * is the type of
+    // * content
+    return;
+  }
+
+  this->contentType = "Content-Type: " + it->second + "\r\n";
+}
+
+std::string Response::getContentType() const { return this->contentType; }
+
+// * content length
+void Response::setContentLength(const std::string &body) {
+  size_t len = body.length();
+  std::stringstream ss;
+  ss << len;
+  this->contentLength = "Content-Length: " + ss.str() + "\r\n";
+};
+
+std::string Response::getContentLength() const { return this->contentLength; }
+
+// * headers
+std::string Response::getHeaders() const { return this->headers; }
+
+void Response::setHeaders() {
+  this->headers = this->getStatusLine() + this->serverName +
+                  this->getContentType() + getContentLength() + "\r\n";
+}
+
+// * body
+void Response::setBody(std::ifstream &file) {
+  std::string line;
+  this->body.clear();
+  while (std::getline(file, line)) {
+    this->body += line + "\n";
+  }
+  this->body += "\n\r";
+}
+std::string Response::getBody() const { return this->body + "\r\n"; }
+void Response::addDataToBody(size_t pos, std::string &data) {
+  this->body.insert(pos, data);
+}
+
+// * response
+void Response::setResponse() { this->res = getHeaders() + getBody(); }
+std::string Response::getResponse() const { return this->res; }
 
 // ! Order of response
 // HTTP/1.1 200 OK
@@ -144,41 +227,13 @@ Response::parseFormURLEncoded(const std::string &post_body) {
   return result;
 }
 
-// * Get content type
-void Response::setContentType(const std::string &path) {
-  size_t pos = path.rfind(".");
-
-  if (pos == std::string::npos) {
-    this->contentType =
-        "Content-Type: application/octet-stream\r\n"; // * we dont know what
-    // * is the type of
-    // * content
-    return;
-  }
-
-  std::string extention = path.substr(pos);
-
-  std::map<std::string, std::string>::iterator it =
-      this->mimeTypes.find(extention);
-
-  if (it == this->mimeTypes.end()) {
-    this->contentType =
-        "Content-Type: application/octet-stream\r\n"; // * we dont know what
-    // * is the type of
-    // * content
-    return;
-  }
-
-  this->contentType = "Content-Type: " + it->second + "\r\n";
-}
-
 // * Method Not Allowed
 void Response::methodNotAllowed(const Request &req) {
   // * set status code
   this->setStatusCode(METHOD_NOT_ALLOWED);
 
   // * full path
-  std::string fullPath = "/pages/errors/404.html";
+  std::string fullPath = "/pages/errors/405.html";
 
   // * Generate response
   this->generateResponse(req, fullPath);
@@ -206,6 +261,7 @@ void Response::generateResponse(const Request &req, std::string &path) {
 
   // * Body
   this->setBody(file);
+  // ? body of post method
   if (req.method == POST) { // ? add raw data if method is post
     size_t pos = this->getBody().find("<!-- raw data -->\n");
     if (pos != std::string::npos) {
@@ -264,7 +320,7 @@ void Response::generateResponse(const Request &req, std::string &path) {
 }
 
 // * Response
-void Response::response(const int clientFd, const Request &req) {
+void Response::response(const Request &req) {
   if (req.method == GET) {
     this->GET_METHOD(req);
   } else if (req.method == POST) {
@@ -274,7 +330,4 @@ void Response::response(const int clientFd, const Request &req) {
   } else {
     this->methodNotAllowed(req);
   }
-
-  // * send Response
-  send(clientFd, this->getResponse().c_str(), this->getResponse().length(), 0);
 }

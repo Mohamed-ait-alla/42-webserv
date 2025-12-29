@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/29 17:23:09 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/29 18:53:11 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,7 +135,6 @@ void Response::GET_METHOD(const Request &req) {
 // * POST METHOD
 void Response::POST_METHOD(const Request &req) {
   std::string pathOfDataForm = "pages/post-request-data.html";
-  std::string pathOfDataUploads = "uploads";
 
   // * check content type
   std::string postContentType =
@@ -243,7 +242,7 @@ void Response::generateResponse(const Request &req, std::string &path) {
   std::ifstream file(path.c_str());
   if (!file.is_open()) {
     // todo: show error in browser
-    std::cerr << "Error: file is not open !" << std::endl;
+    std::cerr << "Error: file is not open (generateResponse) !" << std::endl;
     file.close();
     return;
   }

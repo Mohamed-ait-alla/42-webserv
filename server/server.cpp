@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/27 20:44:41 by mait-all          #+#    #+#             */
-/*   Updated: 2025/12/30 20:54:14 by mait-all         ###   ########.fr       */
+/*   Updated: 2025/12/30 21:22:31 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void	Server::run() {
 	int					epollfd;
 	int					nfds;
 	int					opt;
-	struct sockaddr_in	address;
+	struct sockaddr_in	server_addr;
 	socklen_t			addrlen;
 	struct epoll_event	ev, events[MAX_EVENTS];
 	const char 				*hello="HTTP/1.1 200 OK\r\n"
@@ -62,12 +62,12 @@ void	Server::run() {
 	                   				 "Sir, Tal3b!";
 
 	// Initialization 
-	address.sin_family = IPv4;
-	address.sin_addr.s_addr = htonl(IP);
-	address.sin_port = htons(PORT);
-	std::memset(address.sin_zero, 0, sizeof(address.sin_zero));
+	server_addr.sin_family = IPv4;
+	server_addr.sin_addr.s_addr = htonl(IP);
+	server_addr.sin_port = htons(PORT);
+	std::memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
 	opt = 1;
-	addrlen = sizeof(address);
+	addrlen = sizeof(server_addr);
 
 	// Socket Creation
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -81,7 +81,7 @@ void	Server::run() {
 	setNonBlocking(sockfd);
 	
 	// Socket Identification
-	if (bind(sockfd, (struct sockaddr *)&address, addrlen) < 0)
+	if (bind(sockfd, (struct sockaddr *)&server_addr, addrlen) < 0)
 		throwError("bind()");
 
 	// Listen for incoming connections
@@ -108,9 +108,15 @@ void	Server::run() {
 		{
 			if (events[i].data.fd == sockfd)
 			{
-				connSock = accept(sockfd, (struct sockaddr *)&address, &addrlen);
-				if (connSock < 0)
-					throwError("accept()");
+				while (true)
+				{
+					struct sockaddr_in	client_addr;
+					socklen_t			client_len = sizeof(client_addr);
+					connSock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+					if (connSock < 0) // note: if accept sets errno to EAGAIN OR EWOULDBLOCK means it processed all incomming connections
+						break;		  //	   else it fails and we should throw, but checking errno is forbidden here.
+				}
+				
 				setNonBlocking(connSock);
 				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = connSock;

@@ -6,14 +6,14 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/29 18:53:11 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/30 12:58:55 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
 // * initialize server name
-const std::string Response::serverName = "webserv/1.0\r\n";
+const std::string Response::serverName = "Server: webserv/1.0\r\n";
 
 // * Default Constructor
 Response::Response() { this->setMimeTypes(); }
@@ -156,7 +156,13 @@ void Response::POST_METHOD(const Request &req) {
     } else {
       this->setStatusCode(this->OK);
     }
-  } else if (postContentType == "multipart/form-data") { // ? (img, video, ...)
+  } else if (postContentType.substr(0, 52) ==
+             "multipart/form-data; boundary=----WebKitFormBoundary") { // ?
+                                                                       // (img,
+                                                                       // video,
+                                                                       // ...)
+    std::cout << "=========================yes is "
+                 "file====================================\n";
   }
   // * Generate response
   this->generateResponse(req, pathOfDataForm);
@@ -227,7 +233,7 @@ void Response::methodNotAllowed(const Request &req) {
   this->setStatusCode(METHOD_NOT_ALLOWED);
 
   // * full path
-  std::string fullPath = "/pages/errors/405.html";
+  std::string fullPath = "pages/errors/405.html";
 
   // * Generate response
   this->generateResponse(req, fullPath);
@@ -327,12 +333,16 @@ void Response::generateResponse(const Request &req, std::string &path) {
 // * Response
 void Response::response(const Request &req) {
   if (req.method == GET) {
+    std::cout << "=======GET=======" << std::endl;
     this->GET_METHOD(req);
   } else if (req.method == POST) {
     this->POST_METHOD(req);
+    std::cout << "=======POST=======" << std::endl;
   } else if (req.method == DELETE) {
     this->DELETE_METHOD(req);
+    std::cout << "=======DELETE=======" << std::endl;
   } else {
     this->methodNotAllowed(req);
+    std::cout << "=======ELSE=======" << std::endl;
   }
 }

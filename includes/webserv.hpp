@@ -6,30 +6,30 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/31 12:08:12 by mdahani          ###   ########.fr       */
+/*   Updated: 2025/12/31 12:16:49 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef WEBSERV_HPP
-# define WEBSERV_HPP
-# include <climits>
-# include <ctime>
-# include <fcntl.h>
-# include <fstream>
-# include <iostream>
-# include <map>
-# include <netinet/in.h>
-# include <sstream>
-# include <cstring>
-# include <sys/epoll.h>
-# include <sys/socket.h>
-# include <unistd.h>
-# define PORT 8080
-# define IP INADDR_ANY
-# define IPv4 AF_INET
-# define BACK_LOG 4096
-# define MAX_BUFFER_SIZE 4096
-# define MAX_EVENTS 1024
+#define WEBSERV_HPP
+#include <climits>
+#include <cstring>
+#include <ctime>
+#include <fcntl.h>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <netinet/in.h>
+#include <sstream>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#define PORT 8080
+#define IP INADDR_ANY
+#define IPv4 AF_INET
+#define BACK_LOG 4096
+#define MAX_BUFFER_SIZE 4096
+#define MAX_EVENTS 1024
 
 // ******************************************************************************
 // //
@@ -58,38 +58,33 @@ class Webserv {
       MOVED_PERMANENTLY = 301,
       FOUND = 302,
 
-		enum STATUS_CODE {
-			// * 2xx Success
-			OK = 200,
-			CREATED = 201,
-			NO_CONTENT = 204,
+    };
 
-			// * 3xx Redirection
-			MOVED_PERMANENTLY = 301,
-			FOUND = 302,
+    enum STATUS_CODE {
+      // * 2xx Success
+      OK = 200,
+      CREATED = 201,
+      NO_CONTENT = 204,
 
-			// * 4xx Client Error
-			BAD_REQUEST = 400,
-			FORBIDDEN = 403,
-			NOT_FOUND = 404,
-			METHOD_NOT_ALLOWED = 405,
-			PAYLOAD_TOO_LARGE = 413,
+      // * 3xx Redirection
+      MOVED_PERMANENTLY = 301,
+      FOUND = 302,
 
-			// * 5xx Server Error
-			INTERNAL_SERVER_ERROR = 500,
-			BAD_GATEWAY = 502,
-			GATEWAY_TIMEOUT = 504
-		};
-
-		// member functions
-		void	initMimeTypes();
-		void	throwError(std::string func);
+      // * 4xx Client Error
+      BAD_REQUEST = 400,
+      FORBIDDEN = 403,
+      NOT_FOUND = 404,
+      METHOD_NOT_ALLOWED = 405,
+      PAYLOAD_TOO_LARGE = 413,
 
       // * 5xx Server Error
       INTERNAL_SERVER_ERROR = 500,
       BAD_GATEWAY = 502,
       GATEWAY_TIMEOUT = 504
     };
+    // member functions
+    void initMimeTypes();
+    void throwError(std::string func);
 };
 
 // ******************************************************************************
@@ -103,13 +98,13 @@ class Server : public Webserv {
   private:
     int _sockfd;
 
-	public:
-		Server();
+  public:
+    Server();
 
-		int		getSockFd() const;
-		void	setSockFd(int fd);
-		void	setNonBlocking(int fd);
-		void	run();
+    int getSockFd() const;
+    void setSockFd(int fd);
+    void setNonBlocking(int fd);
+    void run();
 
     int getSockFd() const;
     void setSockFd(int fd);

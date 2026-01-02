@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/02 11:54:28 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/02 15:42:33 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,10 +188,9 @@ void	Server::run() {
 				else if (events[i].events & EPOLLOUT)
 				{ 
 					// file descriptor each time is opened
-					res.response(req);
-					std::cout << "jskfjldj";
 					if (!clients[client_fd].isHeaderSent)
 					{
+						res.response(req);
 						send(client_fd, res.getHeaders().c_str(), res.getHeaders().length(), 0);
 						clients[client_fd].isHeaderSent = true;
 					}
@@ -200,19 +199,18 @@ void	Server::run() {
 						char	buffer[100];
 						ssize_t	bytesRead;
 						bytesRead = read(res.getBodyFd(), buffer, sizeof(buffer));
-						if (bytesRead < 0)
+						if (bytesRead <= 0)
 						{
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 							clients[client_fd].request = "";
 							close(client_fd);
+							clients.erase(client_fd);
 							continue;
 						}
 						ssize_t bytesSent = send(client_fd, buffer, strlen(buffer), 0);
 						if (bytesSent < 0)
 							throwError("send()");
-						std::cout << "\n\n------------buffer sent-----------------\n\n";
-						std::cout << buffer << std::endl;
-						std::cout << "--------------------------------------------\n";
+						std::memset(buffer, '\0', sizeof(buffer));
 					}
 				}
 				// Error event => EPOLLERR is setted

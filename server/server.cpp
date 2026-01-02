@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/01 16:14:51 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/02 11:54:28 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,7 +142,7 @@ void	Server::run() {
 					clients[client_fd].content_length = 0;
 					clients[client_fd].headers_complete = false;
 					clients[client_fd].request_complete = false;
-					clients[client_fd].doesGetContentLength = false;
+					clients[client_fd].isHeaderSent = false;
 			}
 			// case 2: handle client events (read/write/error)
 			else
@@ -186,18 +186,34 @@ void	Server::run() {
 				}
 				// Write event => Send response
 				else if (events[i].events & EPOLLOUT)
-				{
+				{ 
+					// file descriptor each time is opened
 					res.response(req);
-					// just for testing a hello response send to each client
-					// std::cout << res.getResponse() << std::endl;
-					// std::cout << "\nresponse sent\n";
-					size_t bytesSent = send(client_fd, res.getResponse().c_str(), res.getResponse().length(), 0);
-					if ((int)bytesSent < 0)
-						throwError("send()");
-					
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
-					clients[client_fd].request = "";
-					close(client_fd);
+					std::cout << "jskfjldj";
+					if (!clients[client_fd].isHeaderSent)
+					{
+						send(client_fd, res.getHeaders().c_str(), res.getHeaders().length(), 0);
+						clients[client_fd].isHeaderSent = true;
+					}
+					if (clients[client_fd].isHeaderSent)
+					{
+						char	buffer[100];
+						ssize_t	bytesRead;
+						bytesRead = read(res.getBodyFd(), buffer, sizeof(buffer));
+						if (bytesRead < 0)
+						{
+							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+							clients[client_fd].request = "";
+							close(client_fd);
+							continue;
+						}
+						ssize_t bytesSent = send(client_fd, buffer, strlen(buffer), 0);
+						if (bytesSent < 0)
+							throwError("send()");
+						std::cout << "\n\n------------buffer sent-----------------\n\n";
+						std::cout << buffer << std::endl;
+						std::cout << "--------------------------------------------\n";
+					}
 				}
 				// Error event => EPOLLERR is setted
 				else

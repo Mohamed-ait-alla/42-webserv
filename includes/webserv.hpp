@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/01 13:54:08 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/02 11:30:15 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
-#include <cstdlib>
 #include <climits>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
@@ -82,37 +82,42 @@ class Webserv {
 // //
 
 typedef struct t_clientState {
-	std::string	request;
-	size_t		bytes_received;
-	size_t		content_length;
-	bool		doesGetContentLength;
-	bool		headers_complete;
-	bool		request_complete;
-
+    std::string request;
+    std::string response;
+    std::string responseHeader;
+    size_t bytes_received;
+    size_t content_length;
+    size_t response_len;
+    bool doesGetContentLength;
+    bool headers_complete;
+    bool request_complete;
+    bool isHeaderSent;
 
 } t_clientState;
 
 class Server : public Webserv {
 
-	private:
-		int _sockfd;
+  private:
+    int _sockfd;
 
-	public:
-		std::map<int, t_clientState> clients;
-		Server();
+  public:
+    std::map<int, t_clientState> clients;
+    Server();
 
-		int		getSockFd() const;
-		void	setSockFd(int fd);
-		void	setNonBlocking(int fd);
-		bool	isCompleteRequest(std::string& request);
-		size_t	getContentLength(std::string& request);
-		void	run();
+    int getSockFd() const;
+    void setSockFd(int fd);
+    void setNonBlocking(int fd);
+    bool isCompleteRequest(std::string &request);
+    size_t getContentLength(std::string &request);
+    void run();
 };
 
-// ****************************************************************************** //
+// ******************************************************************************
+// //
 //
 //                                 Request Class //
-// ****************************************************************************** //
+// ******************************************************************************
+// //
 
 class Request : public Webserv {
 
@@ -145,6 +150,7 @@ class Response : public Webserv {
     std::string headers;
     static const std::string serverName;
     std::string body;
+    int bodyFd;
 
   public:
     // * Default Constructor
@@ -176,6 +182,9 @@ class Response : public Webserv {
 
     void setResponse();
     std::string getResponse() const;
+
+    void setBodyFd(int &fd);
+    int getBodyFd() const;
 
     // * Methods
     void GET_METHOD(const Request &req);

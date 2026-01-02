@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/31 17:13:12 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/02 11:29:14 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,9 @@ void Response::addDataToBody(size_t pos, std::string &data) {
 // * response
 void Response::setResponse() { this->res = getHeaders() + getBody(); }
 std::string Response::getResponse() const { return this->res; }
+
+void Response::setBodyFd(int &fd) { this->bodyFd = fd; }
+int Response::getBodyFd() const { return this->bodyFd; }
 
 // ! Order of response
 // HTTP/1.1 200 OK
@@ -244,14 +247,14 @@ void Response::generateResponse(const Request &req, std::string &path) {
   // * status line
   this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
 
-  // * open file
-  std::ifstream file(path.c_str());
-  if (!file.is_open()) {
-    // todo: show error in browser
-    std::cerr << "Error: file is not open (generateResponse) !" << std::endl;
-    file.close();
-    return;
-  }
+  // // * open file
+  // std::ifstream file(path.c_str());
+  // if (!file.is_open()) {
+  //   // todo: show error in browser
+  //   std::cerr << "Error: file is not open (generateResponse) !" << std::endl;
+  //   file.close();
+  //   return;
+  // }
 
   // * Content Type
   this->setContentType(path);
@@ -259,75 +262,80 @@ void Response::generateResponse(const Request &req, std::string &path) {
   // * add the data of post request to body
   // todo: add data in post-request-data.html
 
-  // * Body
-  this->setBody(file);
+  // // * Body
+  // this->setBody(file);
   // ? body of post method
-  if (req.method == POST) {
-    // * get content type to decide which response will send in post method
-    // std::string contentType =
-    //     req.getRequest().count("Content-Type")
-    //         ? req.getRequest().find("Content-Type")->second
-    //         : "";
-    // if (contentType ==) {
-    //   /* code */
-    // }
+  // if (req.method == POST) {
+  //   // * get content type to decide which response will send in post method
+  //   // std::string contentType =
+  //   //     req.getRequest().count("Content-Type")
+  //   //         ? req.getRequest().find("Content-Type")->second
+  //   //         : "";
+  //   // if (contentType ==) {
+  //   //   /* code */
+  //   // }
 
-    // ? add raw data if method is post and content type is
-    // ? application/x-www-form-urlencoded
-    size_t pos = this->getBody().find("<!-- raw data -->\n");
-    if (pos != std::string::npos) {
-      // * get post body
-      std::string post_body =
-          req.getRequest().count("post-body")
-              ? req.getRequest().find("post-body")->second + "\n"
-              : "";
+  //   // ? add raw data if method is post and content type is
+  //   // ? application/x-www-form-urlencoded
+  //   size_t pos = this->getBody().find("<!-- raw data -->\n");
+  //   if (pos != std::string::npos) {
+  //     // * get post body
+  //     std::string post_body =
+  //         req.getRequest().count("post-body")
+  //             ? req.getRequest().find("post-body")->second + "\n"
+  //             : "";
 
-      // * add raw data to html file
-      this->addDataToBody(pos + strlen("<!-- raw data -->\n"), post_body);
+  //     // * add raw data to html file
+  //     this->addDataToBody(pos + strlen("<!-- raw data -->\n"), post_body);
 
-      // * add parsed data to file html
-      std::map<std::string, std::string> parsedData =
-          this->parseFormURLEncoded(post_body);
+  //     // * add parsed data to file html
+  //     std::map<std::string, std::string> parsedData =
+  //         this->parseFormURLEncoded(post_body);
 
-      pos = this->getBody().find("<!-- parsed data -->\n");
-      if (pos != std::string::npos) {
-        // * skip the comment of html
-        pos += strlen("<!-- parsed data -->\n");
-        // * merge data with html and send it
-        std::map<std::string, std::string>::iterator itParsedData =
-            parsedData.begin();
-        for (; itParsedData != parsedData.end(); ++itParsedData) {
-          post_body.clear();
-          post_body.clear();
+  //     pos = this->getBody().find("<!-- parsed data -->\n");
+  //     if (pos != std::string::npos) {
+  //       // * skip the comment of html
+  //       pos += strlen("<!-- parsed data -->\n");
+  //       // * merge data with html and send it
+  //       std::map<std::string, std::string>::iterator itParsedData =
+  //           parsedData.begin();
+  //       for (; itParsedData != parsedData.end(); ++itParsedData) {
+  //         post_body.clear();
+  //         post_body.clear();
 
-          post_body = "<div class=\"flex justify-between bg-zinc-800 px-4 py-2 "
-                      "rounded\">\n"
-                      "<span class=\"text-blue-400 font-medium\">" +
-                      itParsedData->first + "</span>\n";
+  //         post_body = "<div class=\"flex justify-between bg-zinc-800 px-4
+  //         py-2 "
+  //                     "rounded\">\n"
+  //                     "<span class=\"text-blue-400 font-medium\">" +
+  //                     itParsedData->first + "</span>\n";
 
-          post_body += "<span class=\"text-white\">" + itParsedData->second +
-                       "</span>\n"
-                       "</div>\n";
+  //         post_body += "<span class=\"text-white\">" + itParsedData->second +
+  //                      "</span>\n"
+  //                      "</div>\n";
 
-          this->addDataToBody(pos, post_body);
-          // * update position
-          pos += post_body.length();
-        }
-      }
-    }
-  }
+  //         this->addDataToBody(pos, post_body);
+  //         // * update position
+  //         pos += post_body.length();
+  //       }
+  //     }
+  //   }
+  // }
 
-  // * Content Length
-  this->setContentLength(this->getBody());
+  // // * Content Length
+  // this->setContentLength(this->getBody());
 
   // * merge all headers
   this->setHeaders();
 
-  // * create response
-  this->setResponse();
+  // * get fd of body
+  int fd = open(path.c_str(), O_RDONLY);
+  this->setBodyFd(fd);
 
-  // ! close the file
-  file.close();
+  // // * create response
+  // this->setResponse();
+
+  // // ! close the file
+  // file.close();
 }
 
 // * Response

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/02 15:42:33 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/02 20:52:12 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,9 +207,11 @@ void	Server::run() {
 							clients.erase(client_fd);
 							continue;
 						}
-						ssize_t bytesSent = send(client_fd, buffer, strlen(buffer), 0);
+						// * i change strlen by bytesRead
+						ssize_t bytesSent = send(client_fd, buffer, bytesRead, 0);
 						if (bytesSent < 0)
 							throwError("send()");
+						// * this is useless
 						std::memset(buffer, '\0', sizeof(buffer));
 					}
 				}

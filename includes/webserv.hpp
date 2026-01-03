@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/02 11:30:15 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/03 11:18:34 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include <sstream>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #define PORT 8080
 #define IP INADDR_ANY
@@ -170,18 +171,18 @@ class Response : public Webserv {
     void setContentType(const std::string &path);
     std::string getContentType() const;
 
-    void setContentLength(const std::string &body);
+    void setContentLength(const size_t &bodyLength);
     std::string getContentLength() const;
 
     std::string getHeaders() const;
     void setHeaders();
 
-    void setBody(std::ifstream &file);
-    std::string getBody() const;
-    void addDataToBody(size_t pos, std::string &data);
+    // void setBody(std::ifstream &file);
+    // std::string getBody() const;
+    // void addDataToBody(size_t pos, std::string &data);
 
-    void setResponse();
-    std::string getResponse() const;
+    // void setResponse();
+    // std::string getResponse() const;
 
     void setBodyFd(int &fd);
     int getBodyFd() const;
@@ -191,9 +192,11 @@ class Response : public Webserv {
     void POST_METHOD(const Request &req);
     void DELETE_METHOD(const Request &req);
     std::string statusCodeDescription(STATUS_CODE statusCode);
+    size_t countBodyLength(const std::string &path);
     std::map<std::string, std::string>
     parseFormURLEncoded(const std::string &post_body);
     void generateResponse(const Request &req, std::string &path);
+    // size_t findInFile(std::string &path, std::string str);
     void methodNotAllowed(const Request &req);
     void response(const Request &req);
 };

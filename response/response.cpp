@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/02 11:29:14 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/03 11:57:11 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,10 +63,9 @@ void Response::setContentType(const std::string &path) {
 std::string Response::getContentType() const { return this->contentType; }
 
 // * content length
-void Response::setContentLength(const std::string &body) {
-  size_t len = body.length();
+void Response::setContentLength(const size_t &bodyLength) {
   std::stringstream ss;
-  ss << len;
+  ss << bodyLength;
   this->contentLength = "Content-Length: " + ss.str() + "\r\n";
 };
 
@@ -79,24 +78,6 @@ void Response::setHeaders() {
   this->headers = this->getStatusLine() + this->serverName +
                   this->getContentType() + getContentLength() + "\r\n";
 }
-
-// * body
-void Response::setBody(std::ifstream &file) {
-  std::string line;
-  this->body.clear();
-  while (std::getline(file, line)) {
-    this->body += line + "\n";
-  }
-  this->body += "\n\r";
-}
-std::string Response::getBody() const { return this->body + "\r\n"; }
-void Response::addDataToBody(size_t pos, std::string &data) {
-  this->body.insert(pos, data);
-}
-
-// * response
-void Response::setResponse() { this->res = getHeaders() + getBody(); }
-std::string Response::getResponse() const { return this->res; }
 
 void Response::setBodyFd(int &fd) { this->bodyFd = fd; }
 int Response::getBodyFd() const { return this->bodyFd; }
@@ -139,34 +120,17 @@ void Response::GET_METHOD(const Request &req) {
 void Response::POST_METHOD(const Request &req) {
   std::string pathOfDataForm = "pages/post-request-data.html";
 
-  // * check content type
-  std::string postContentType =
-      req.getRequest().count("Content-Type")
-          ? req.getRequest().find("Content-Type")->second
-          : "";
-
-  // * handle all content type
-  // ? html form this is not plain human text like HTML
-  // ? (email=mdahani%40student.1337.ma&password=1337)
-  if (postContentType == "application/x-www-form-urlencoded") {
-    // * check the file permissions and if the file exist
-    if (access(pathOfDataForm.c_str(), F_OK) == -1) {
-      this->setStatusCode(this->NOT_FOUND);
-      pathOfDataForm = "pages/errors/404.html";
-    } else if (access(pathOfDataForm.c_str(), R_OK) == -1) {
-      this->setStatusCode(this->FORBIDDEN);
-      pathOfDataForm = "pages/errors/403.html";
-    } else {
-      this->setStatusCode(this->OK);
-    }
-  } else if (postContentType.substr(0, 52) ==
-             "multipart/form-data; boundary=----WebKitFormBoundary") { // ?
-                                                                       // (img,
-                                                                       // video,
-                                                                       // ...)
-    std::cout << "=========================yes is "
-                 "file====================================\n";
+  // * check the file permissions and if the file exist
+  if (access(pathOfDataForm.c_str(), F_OK) == -1) {
+    this->setStatusCode(this->NOT_FOUND);
+    pathOfDataForm = "pages/errors/404.html";
+  } else if (access(pathOfDataForm.c_str(), R_OK) == -1) {
+    this->setStatusCode(this->FORBIDDEN);
+    pathOfDataForm = "pages/errors/403.html";
+  } else {
+    this->setStatusCode(this->OK);
   }
+
   // * Generate response
   this->generateResponse(req, pathOfDataForm);
 }
@@ -204,6 +168,17 @@ std::string Response::statusCodeDescription(STATUS_CODE statusCode) {
     return "504 Gateway Timeout";
   }
   return "Unknown Status";
+}
+
+// * count the body length
+size_t Response::countBodyLength(const std::string &path) {
+  struct stat buffer;
+
+  if (stat(path.c_str(), &buffer) == -1) {
+    return 0;
+  }
+
+  return buffer.st_size;
 }
 
 // * parse form URL encoded
@@ -244,85 +219,56 @@ void Response::methodNotAllowed(const Request &req) {
 
 // * Generate response
 void Response::generateResponse(const Request &req, std::string &path) {
+
+  // * root directory
+  std::string root("pages");
+
+  // * application/x-www-form-urlencoded page
+  std::string normalPostPath = "/post-request-data.html";
+
+  // * multipart/form-data; boundary=----WebKitFormBoundary page
+  std::string uploadPostPath = "/post-request-upload.html";
+  std::string errorUploadPostPath = "/post-request-error-upload.html";
+
   // * status line
   this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
-
-  // // * open file
-  // std::ifstream file(path.c_str());
-  // if (!file.is_open()) {
-  //   // todo: show error in browser
-  //   std::cerr << "Error: file is not open (generateResponse) !" << std::endl;
-  //   file.close();
-  //   return;
-  // }
 
   // * Content Type
   this->setContentType(path);
 
-  // * add the data of post request to body
-  // todo: add data in post-request-data.html
+  // ? redirection when we have a post method
+  if (req.method == POST) {
+    // * get content type to decide which response will send in post method
+    std::string contentType =
+        req.getRequest().count("Content-Type")
+            ? req.getRequest().find("Content-Type")->second
+            : "";
 
-  // // * Body
-  // this->setBody(file);
-  // ? body of post method
-  // if (req.method == POST) {
-  //   // * get content type to decide which response will send in post method
-  //   // std::string contentType =
-  //   //     req.getRequest().count("Content-Type")
-  //   //         ? req.getRequest().find("Content-Type")->second
-  //   //         : "";
-  //   // if (contentType ==) {
-  //   //   /* code */
-  //   // }
+    // ? application/x-www-form-urlencoded
+    if (contentType == "application/x-www-form-urlencoded") {
+      path = (root + normalPostPath);
+    } else if (contentType.substr(0, 52) == // ? multipart/form-data;
+                                            // ? boundary=----WebKitFormBoundary
+               "multipart/form-data; boundary=----WebKitFormBoundary") {
+      std::string uploadBody = req.getRequest().count("post-body")
+                                   ? req.getRequest().find("post-body")->second
+                                   : "";
+      // * check if the file is empty
+      if (uploadBody.empty()) {
+        path = (root + errorUploadPostPath);
+      } else {
+        path = (root + uploadPostPath);
+      }
+    }
+  }
 
-  //   // ? add raw data if method is post and content type is
-  //   // ? application/x-www-form-urlencoded
-  //   size_t pos = this->getBody().find("<!-- raw data -->\n");
-  //   if (pos != std::string::npos) {
-  //     // * get post body
-  //     std::string post_body =
-  //         req.getRequest().count("post-body")
-  //             ? req.getRequest().find("post-body")->second + "\n"
-  //             : "";
-
-  //     // * add raw data to html file
-  //     this->addDataToBody(pos + strlen("<!-- raw data -->\n"), post_body);
-
-  //     // * add parsed data to file html
-  //     std::map<std::string, std::string> parsedData =
-  //         this->parseFormURLEncoded(post_body);
-
-  //     pos = this->getBody().find("<!-- parsed data -->\n");
-  //     if (pos != std::string::npos) {
-  //       // * skip the comment of html
-  //       pos += strlen("<!-- parsed data -->\n");
-  //       // * merge data with html and send it
-  //       std::map<std::string, std::string>::iterator itParsedData =
-  //           parsedData.begin();
-  //       for (; itParsedData != parsedData.end(); ++itParsedData) {
-  //         post_body.clear();
-  //         post_body.clear();
-
-  //         post_body = "<div class=\"flex justify-between bg-zinc-800 px-4
-  //         py-2 "
-  //                     "rounded\">\n"
-  //                     "<span class=\"text-blue-400 font-medium\">" +
-  //                     itParsedData->first + "</span>\n";
-
-  //         post_body += "<span class=\"text-white\">" + itParsedData->second +
-  //                      "</span>\n"
-  //                      "</div>\n";
-
-  //         this->addDataToBody(pos, post_body);
-  //         // * update position
-  //         pos += post_body.length();
-  //       }
-  //     }
-  //   }
-  // }
-
-  // // * Content Length
-  // this->setContentLength(this->getBody());
+  // * Content Length
+  std::cout << "-----------------------path of file------------------------"
+            << std::endl;
+  std::cout << path << std::endl;
+  std::cout << "-----------------------path of file------------------------"
+            << std::endl;
+  this->setContentLength(this->countBodyLength(path));
 
   // * merge all headers
   this->setHeaders();
@@ -331,11 +277,11 @@ void Response::generateResponse(const Request &req, std::string &path) {
   int fd = open(path.c_str(), O_RDONLY);
   this->setBodyFd(fd);
 
-  // // * create response
-  // this->setResponse();
-
-  // // ! close the file
-  // file.close();
+  std::cout << "-----------------------Headers------------------------"
+            << std::endl;
+  std::cout << getHeaders() << std::endl;
+  std::cout << "-----------------------Headers------------------------"
+            << std::endl;
 }
 
 // * Response

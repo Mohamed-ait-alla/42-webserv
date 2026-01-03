@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/03 11:18:34 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/03 15:10:38 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,14 +143,12 @@ class Request : public Webserv {
 class Response : public Webserv {
   private:
     std::map<std::string, std::string> mimeTypes;
-    std::string res;
     STATUS_CODE status_code;
     std::string statusLine;
     std::string contentType;
     std::string contentLength;
     std::string headers;
     static const std::string serverName;
-    std::string body;
     int bodyFd;
 
   public:
@@ -177,28 +175,21 @@ class Response : public Webserv {
     std::string getHeaders() const;
     void setHeaders();
 
-    // void setBody(std::ifstream &file);
-    // std::string getBody() const;
-    // void addDataToBody(size_t pos, std::string &data);
-
-    // void setResponse();
-    // std::string getResponse() const;
-
     void setBodyFd(int &fd);
     int getBodyFd() const;
 
     // * Methods
-    void GET_METHOD(const Request &req);
-    void POST_METHOD(const Request &req);
+    void GET_METHOD(Request &req);
+    void POST_METHOD(Request &req);
     void DELETE_METHOD(const Request &req);
     std::string statusCodeDescription(STATUS_CODE statusCode);
     size_t countBodyLength(const std::string &path);
+    void addDataToBody(const Request &req);
     std::map<std::string, std::string>
     parseFormURLEncoded(const std::string &post_body);
-    void generateResponse(const Request &req, std::string &path);
-    // size_t findInFile(std::string &path, std::string str);
-    void methodNotAllowed(const Request &req);
-    void response(const Request &req);
+    void generateResponse(Request &req);
+    void methodNotAllowed(Request &req);
+    void response(Request &req);
 };
 
 #endif

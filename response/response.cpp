@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/03 11:57:11 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/03 16:01:09 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,47 +92,43 @@ int Response::getBodyFd() const { return this->bodyFd; }
 // <body>
 
 // * GET METHOD
-void Response::GET_METHOD(const Request &req) {
-  std::string fullPath("pages");
-
+void Response::GET_METHOD(Request &req) {
   if (req.path == "/") {
-    fullPath += req.path + "index.html";
-  } else {
-    fullPath += req.path;
-  }
-
-  // * check the file permissions and if the file exist
-  if (access(fullPath.c_str(), F_OK) == -1) {
-    this->setStatusCode(this->NOT_FOUND);
-    fullPath = "pages/errors/404.html";
-  } else if (access(fullPath.c_str(), R_OK) == -1) {
-    this->setStatusCode(this->FORBIDDEN);
-    fullPath = "pages/errors/403.html";
-  } else {
-    this->setStatusCode(this->OK);
+    req.path.append("index.html");
   }
 
   // * Generate response
-  this->generateResponse(req, fullPath);
+  this->generateResponse(req);
 }
 
 // * POST METHOD
-void Response::POST_METHOD(const Request &req) {
-  std::string pathOfDataForm = "pages/post-request-data.html";
+void Response::POST_METHOD(Request &req) {
+  // * get content type to decide which response will send in post method
+  std::string contentType = req.getRequest().count("Content-Type")
+                                ? req.getRequest().find("Content-Type")->second
+                                : "";
 
-  // * check the file permissions and if the file exist
-  if (access(pathOfDataForm.c_str(), F_OK) == -1) {
-    this->setStatusCode(this->NOT_FOUND);
-    pathOfDataForm = "pages/errors/404.html";
-  } else if (access(pathOfDataForm.c_str(), R_OK) == -1) {
-    this->setStatusCode(this->FORBIDDEN);
-    pathOfDataForm = "pages/errors/403.html";
-  } else {
-    this->setStatusCode(this->OK);
+  // ? application/x-www-form-urlencoded
+  if (contentType == "application/x-www-form-urlencoded\r") {
+    // * set all data in html page
+    req.path = "/post-request-data.html";
+    this->addDataToBody(req);
+  } else if (contentType.substr(0, 52) == // ? multipart/form-data;
+                                          // ? boundary=----WebKitFormBoundary
+             "multipart/form-data; boundary=----WebKitFormBoundary") {
+    std::string uploadBody = req.getRequest().count("post-body")
+                                 ? req.getRequest().find("post-body")->second
+                                 : "";
+    // * check if the file is empty
+    if (uploadBody.empty()) {
+      req.path = "/post-request-error-upload.html";
+    } else {
+      req.path = "/post-request-upload.html";
+    }
   }
 
   // * Generate response
-  this->generateResponse(req, pathOfDataForm);
+  this->generateResponse(req);
 }
 
 // * DELETE METHOD
@@ -181,6 +177,107 @@ size_t Response::countBodyLength(const std::string &path) {
   return buffer.st_size;
 }
 
+// * add data to body
+void Response::addDataToBody(const Request &req) {
+  std::string beforRawData =
+      "<!DOCTYPE html>\n"
+      "<html lang=\"en\">\n"
+      "<head>\n"
+      "  <meta charset=\"UTF-8\" />\n"
+      "  <meta name=\"viewport\" content=\"width=device-width, "
+      "initial-scale=1.0\" />\n"
+      "  <script "
+      "src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>\n"
+      "  <title>POST Request Data</title>\n"
+      "</head>\n"
+      "\n"
+      "<body class=\"min-h-screen bg-black flex items-center "
+      "justify-center\">\n"
+      "  <!-- Card -->\n"
+      "  <div class=\"bg-zinc-900 border border-zinc-700 rounded-xl shadow-lg "
+      "p-6 w-full max-w-xl\">\n"
+      "\n"
+      "    <!-- Title -->\n"
+      "    <h1 class=\"text-xl font-bold text-white mb-4 text-center\">\n"
+      "      📩 POST Request Body\n"
+      "    </h1>\n"
+      "\n"
+      "    <div class=\"mb-4\">\n"
+      "      <p class=\"text-sm text-zinc-400 mb-1\">\n"
+      "        Raw data :\n"
+      "      </p>\n"
+      "\n"
+      "<!-- raw data -->\n"
+      "      <pre class=\"bg-black text-green-400 p-3 rounded text-sm "
+      "overflow-x-auto\">\n";
+
+  std::string beforParseData =
+      "        </pre>\n"
+      "  </div>\n"
+      "  <div>\n"
+      "    <p class=\"text-sm text-zinc-400 mb-2 mt-4\">\n"
+      "      Parsed fields :\n"
+      "    </p>\n"
+      "    <div class=\"space-y-2\">\n"
+      "      <!-- parsed data -->\n";
+
+  std::string afterPaseData = "    </div>\n"
+                              "  </div>\n"
+                              "</div>\n"
+                              "</body>\n"
+                              "</html>\n";
+
+  // todo: get the root path
+  std::string fullPath("pages");
+
+  fullPath.append(req.path);
+
+  // ? std::ios::out open the file for write event and if not exist created
+  // ? std::ios::trunc remove all things in file
+  std::ofstream file(fullPath.c_str(), std::ios::out | std::ios::trunc);
+  if (!file.is_open()) {
+    // todo: print error in terminal
+    std::cerr << "file is not open(addDataToBoddy)" << std::endl;
+    return;
+  }
+
+  // * insert all data in file
+  file << beforRawData;
+
+  // * get post-body
+  std::string body_post = req.getRequest().count("post-body")
+                              ? req.getRequest().find("post-body")->second
+                              : "";
+
+  file << body_post;
+
+  file << beforParseData;
+
+  // * parse body post
+  std::map<std::string, std::string> dataOfBody =
+      this->parseFormURLEncoded(body_post);
+
+  std::map<std::string, std::string>::iterator it = dataOfBody.begin();
+  std::string parseData;
+  for (; it != dataOfBody.end(); ++it) {
+
+    parseData +=
+        "<div class=\"flex justify-between bg-zinc-800 px-4 py-2 rounded\">\n"
+        "<span class=\"text-blue-400 font-medium\">" +
+        it->first +
+        "</span>"
+        "<span class=\"text-white\">" +
+        it->second +
+        "</span>"
+        "</div>\n";
+  }
+
+  // * add raw data
+  file << parseData;
+
+  file << afterPaseData;
+}
+
 // * parse form URL encoded
 std::map<std::string, std::string>
 Response::parseFormURLEncoded(const std::string &post_body) {
@@ -206,7 +303,7 @@ Response::parseFormURLEncoded(const std::string &post_body) {
 }
 
 // * Method Not Allowed
-void Response::methodNotAllowed(const Request &req) {
+void Response::methodNotAllowed(Request &req) {
   // * set status code
   this->setStatusCode(METHOD_NOT_ALLOWED);
 
@@ -214,68 +311,55 @@ void Response::methodNotAllowed(const Request &req) {
   std::string fullPath = "pages/errors/405.html";
 
   // * Generate response
-  this->generateResponse(req, fullPath);
+  this->generateResponse(req);
 }
 
 // * Generate response
-void Response::generateResponse(const Request &req, std::string &path) {
-
+void Response::generateResponse(Request &req) {
   // * root directory
-  std::string root("pages");
+  // todo: check if we have the folder
+  // ? think about if we can use inset to req.path and remove this fullPath
+  // ? variable
+  std::string fullPath("pages");
 
-  // * application/x-www-form-urlencoded page
-  std::string normalPostPath = "/post-request-data.html";
+  // * add path to root directory
+  fullPath.append(req.path);
 
-  // * multipart/form-data; boundary=----WebKitFormBoundary page
-  std::string uploadPostPath = "/post-request-upload.html";
-  std::string errorUploadPostPath = "/post-request-error-upload.html";
+  // * check the file permissions and if the file exist
+  // todo: change the path of error pages by config file and check if we have
+  // todo: the folder
+  if (access(fullPath.c_str(), F_OK) == -1) {
+    this->setStatusCode(this->NOT_FOUND);
+    fullPath = "pages/errors/404.html";
+  } else if (access(fullPath.c_str(), R_OK) == -1 ||
+             access(fullPath.c_str(), W_OK) == -1) {
+    this->setStatusCode(this->FORBIDDEN);
+    fullPath = "pages/errors/403.html";
+  } else {
+    this->setStatusCode(this->OK);
+  }
 
   // * status line
   this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
 
   // * Content Type
-  this->setContentType(path);
-
-  // ? redirection when we have a post method
-  if (req.method == POST) {
-    // * get content type to decide which response will send in post method
-    std::string contentType =
-        req.getRequest().count("Content-Type")
-            ? req.getRequest().find("Content-Type")->second
-            : "";
-
-    // ? application/x-www-form-urlencoded
-    if (contentType == "application/x-www-form-urlencoded") {
-      path = (root + normalPostPath);
-    } else if (contentType.substr(0, 52) == // ? multipart/form-data;
-                                            // ? boundary=----WebKitFormBoundary
-               "multipart/form-data; boundary=----WebKitFormBoundary") {
-      std::string uploadBody = req.getRequest().count("post-body")
-                                   ? req.getRequest().find("post-body")->second
-                                   : "";
-      // * check if the file is empty
-      if (uploadBody.empty()) {
-        path = (root + errorUploadPostPath);
-      } else {
-        path = (root + uploadPostPath);
-      }
-    }
-  }
+  this->setContentType(fullPath);
 
   // * Content Length
-  std::cout << "-----------------------path of file------------------------"
-            << std::endl;
-  std::cout << path << std::endl;
-  std::cout << "-----------------------path of file------------------------"
-            << std::endl;
-  this->setContentLength(this->countBodyLength(path));
+  this->setContentLength(this->countBodyLength(fullPath));
 
   // * merge all headers
   this->setHeaders();
 
   // * get fd of body
-  int fd = open(path.c_str(), O_RDONLY);
+  int fd = open(fullPath.c_str(), O_RDONLY);
   this->setBodyFd(fd);
+
+  std::cout << "-----------------------path of file------------------------"
+            << std::endl;
+  std::cout << fullPath << std::endl;
+  std::cout << "-----------------------path of file------------------------"
+            << std::endl;
 
   std::cout << "-----------------------Headers------------------------"
             << std::endl;
@@ -285,7 +369,7 @@ void Response::generateResponse(const Request &req, std::string &path) {
 }
 
 // * Response
-void Response::response(const Request &req) {
+void Response::response(Request &req) {
   if (req.method == GET) {
     std::cout << "=======GET=======" << std::endl;
     this->GET_METHOD(req);

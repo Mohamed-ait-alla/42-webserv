@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/03 16:01:09 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/04 18:58:58 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,13 +116,14 @@ void Response::POST_METHOD(Request &req) {
   } else if (contentType.substr(0, 52) == // ? multipart/form-data;
                                           // ? boundary=----WebKitFormBoundary
              "multipart/form-data; boundary=----WebKitFormBoundary") {
-    std::string uploadBody = req.getRequest().count("post-body")
-                                 ? req.getRequest().find("post-body")->second
+    std::string uploadBody = req.getRequest().count("binary-data")
+                                 ? req.getRequest().find("binary-data")->second
                                  : "";
     // * check if the file is empty
     if (uploadBody.empty()) {
       req.path = "/post-request-error-upload.html";
     } else {
+      // todo: upload file
       req.path = "/post-request-upload.html";
     }
   }

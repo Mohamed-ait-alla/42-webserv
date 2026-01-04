@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/04 10:40:04 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/04 11:38:36 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,7 +225,7 @@ void	Server::run() {
 						// std::cout << bytesRead;
 						// std::cout << "--------------------------------------\n";
 						// * i change strlen by bytesRead
-						ssize_t bytesSent = send(client_fd, buffer, bytesRead, 0);
+						bytesSent = send(client_fd, buffer, bytesRead, 0);
 						if (bytesSent < 0)
 						{
 								close(client_fd);

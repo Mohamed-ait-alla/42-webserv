@@ -159,7 +159,7 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Con
                         throw std::runtime_error("error syntax (config file error_page)");
                 }
                 i++;
-                conf.error_page[atoi(i->c_str())] = *i;
+                conf.error_page[atoi((i - 1)->c_str())] = *i;
                 i++;
                 if (i->compare(";"))
                     throw std::runtime_error("error syntax (config file error_page)");

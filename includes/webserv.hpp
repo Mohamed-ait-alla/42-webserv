@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 18:32:03 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 18:41:29 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ class ConfigFile {
 //                                 Request Class                                  //
 // ****************************************************************************** //
 
-class Request : public Webserv, public ConfigFile {
+class Request : public Webserv {
 
   private:
     std::map<std::string, std::string>	request;
@@ -164,7 +164,7 @@ class Request : public Webserv, public ConfigFile {
     METHOD		method;
     std::string	path;
     std::string	httpV;
-	ConfigFile	config;
+	  ConfigFile	config;
 
     void	setRequest(const std::string &req);
     const	std::map<std::string, std::string> &getRequest() const;

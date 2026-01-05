@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/04 18:58:58 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 10:13:15 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,6 +124,39 @@ void Response::POST_METHOD(Request &req) {
       req.path = "/post-request-error-upload.html";
     } else {
       // todo: upload file
+      std::string filename = req.getRequest().count("filename")
+                                 ? req.getRequest().find("filename")->second
+                                 : "";
+      if (filename.empty()) {
+        std::cerr << "Error: There no name on file!" << std::endl;
+        return;
+      }
+
+      std::string fullPath = "uploads/";
+
+      // * check the directory of upload
+      std::ifstream uploadDir(fullPath.c_str());
+      if (!uploadDir.is_open()) {
+        uploadDir.close();
+        req.path = "/errors/403.html";
+        return;
+      }
+
+      fullPath.append(filename);
+
+      std::ofstream outputFile(fullPath.c_str(),
+                               std::ios::binary | std::ios::out);
+
+      if (!outputFile.is_open()) {
+        std::cerr << "Error: Failed to create file!" << std::endl;
+        return;
+      }
+
+      outputFile << uploadBody;
+
+      // ! close output file
+      outputFile.close();
+
       req.path = "/post-request-upload.html";
     }
   }

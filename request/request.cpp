@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/04 18:56:57 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 10:14:13 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,69 +63,65 @@ void Request::setRequest(const std::string &req) {
     this->request[key] = value;
   }
 
+  // * CORRECT
+
   std::string contentType =
       this->request.count("Content-Type") ? this->request["Content-Type"] : "";
   if (contentType.substr(0, 52) ==
       "multipart/form-data; boundary=----WebKitFormBoundary") {
-    // * skip boundary
-    ss.clear();
-    ss << this->request["post-body"];
 
-    if (!std::getline(ss, line)) {
-      std::cerr << "boundary not found" << std::endl;
-      return;
-    }
-
-    // * check info of post-body
-    while (std::getline(ss, line)) {
-      // * get file name
-      pos = line.find("Content-Disposition");
-      if (pos != std::string::npos) {
-        pos = line.rfind("filename=\"");
-        if (pos == std::string::npos) {
-          std::cerr << "filename=\" not found" << std::endl;
-          return;
-        }
-        size_t start = pos + 10;
-        size_t end = line.rfind("\"");
-        value = line.substr(start, end - start);
-        key = "filename";
-        break;
-        ;
-      }
-    }
-
+    // * check info of post-body (get file name)
+    // * get file name
+    pos = this->request["post-body"].find("Content-Disposition: ");
     // * check if not found Content-Disposition
     if (pos == std::string::npos) {
       std::cerr << "Content-Disposition not found" << std::endl;
       return;
     }
 
+    pos = this->request["post-body"].find("filename=\"", pos);
+    while ((pos = this->request["post-body"].find("filename=\"", pos)) !=
+           std::string::npos) {
+      if (this->request["post-body"][pos - 1] != '"') {
+        break;
+      }
+      pos++;
+    }
+
+    if (pos == std::string::npos) {
+      std::cerr << "filename not found" << std::endl;
+      return;
+    }
+
+    size_t start = pos + 10;
+    size_t end = this->request["post-body"].find("\"", start);
+    key = "filename";
+    value = this->request["post-body"].substr(start, end - start);
+    this->request[key] = value;
+
     // * get binary data of file
-    pos = this->request["post-body"].find("\r\n\r\n");
+    pos = this->request["post-body"].find("\r\n\r\n", end);
     if (pos == std::string::npos) {
       std::cerr << "binary data of file not found" << std::endl;
       return;
     }
 
     // * find last boundary
-    size_t end =
-        this->request["post-body"].rfind("\r\n------WebKitFormBoundary");
+    end = this->request["post-body"].rfind("\r\n------WebKitFormBoundary");
     if (end == std::string::npos) {
       std::cerr << "last boundary not found" << std::endl;
       return;
     }
 
     key = "binary-data";
-    size_t start = pos + 4;
+    start = pos + 4;
     value = this->request["post-body"].substr(start, end - start);
 
     if (!value.empty()) {
       this->request[key] = value;
     } else {
-      // * handle the empty file
-      // * when you upload a non empty file and after that you remove all data
-      // * and get it again
+      // * handle the empty file when you upload a non empty file and after that
+      // * you remove all data and get it again
       this->request.erase(key);
     }
   }

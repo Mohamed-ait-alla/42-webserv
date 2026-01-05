@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 15:51:00 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 17:06:11 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,7 +204,7 @@ class Response : public Webserv {
     // * Methods
     void GET_METHOD(Request &req);
     void POST_METHOD(Request &req);
-    void DELETE_METHOD(const Request &req);
+    void DELETE_METHOD(Request &req);
     std::string statusCodeDescription(STATUS_CODE statusCode);
     size_t countBodyLength(const std::string &path);
     void addDataToBody(const Request &req);

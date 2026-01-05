@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 15:49:19 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 17:17:55 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,7 +184,13 @@ void Response::POST_METHOD(Request &req) {
 }
 
 // * DELETE METHOD
-void Response::DELETE_METHOD(const Request &req) { (void)req; }
+void Response::DELETE_METHOD(Request &req) {
+  // * set status code as default
+  this->setStatusCode(OK);
+
+  // * Generate response
+  this->generateResponse(req);
+}
 
 // * Status code description
 std::string Response::statusCodeDescription(STATUS_CODE statusCode) {

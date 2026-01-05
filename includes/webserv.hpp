@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 17:06:11 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/05 18:25:17 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,12 +88,12 @@ typedef struct s_clientState {
     std::string	request;
     size_t		bytes_received;
     size_t		content_length;
-    bool		doesGetContentLength;
+    bool		isPostRequest;
     bool		headers_complete;
     bool		request_complete;
     bool		isHeaderSent;
 
-	s_clientState(): fd(-1), bytes_received(0), content_length(0), doesGetContentLength(false), headers_complete(false), request_complete(false), isHeaderSent(false) {};
+	s_clientState(): fd(-1), bytes_received(0), content_length(0), isPostRequest(false), headers_complete(false), request_complete(false), isHeaderSent(false) {};
 
 } t_clientState;
 
@@ -112,51 +112,64 @@ class Server : public Webserv {
     void	setNonBlocking(int fd);
     bool	isCompleteRequest(std::string &request);
     size_t	getContentLength(std::string &request);
-	void	sendResponse();
+	void	setUpNewConnection(int epfd, int serverFd, epoll_event ev);
+	bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
+	void	sendResponse(int epfd, int notifiedFd, Request &request);
     void	run(Request &req);
 };
+
+
+// ****************************************************************************** //
+//                               ConfigFile Class                                 //
+// ****************************************************************************** //
+
+typedef struct location
+{
+    std::string					path;
+    std::vector<std::string>	allow_methods;
+    bool						autoindex;
+    std::string					root;
+    std::string					return_to;
+    std::string					index;
+} location;
+
+class ConfigFile {
+	public:
+		std::vector<int> listen;
+		std::string server_name;
+		std::string host;
+		std::string root;
+		int client_max_body_size;
+		std::string index;
+		std::map<int, std::string> error_page;
+		std::vector<location> locations;
+		std::vector<std::string> cgi_path;
+		std::vector<std::string> cgi_ext;
+
+		void  init_the_header_conf_default();
+    	void  parse_config_file(char *av);
+};
+
 
 // ****************************************************************************** //
 //                                 Request Class                                  //
 // ****************************************************************************** //
 
-typedef struct location
-{
-    std::string path;
-    std::vector<std::string> allow_methods;
-    bool autoindex;
-    std::string root;
-    std::string return_to;
-    std::string index;
-} location;
-
 class Request : public Webserv {
 
   private:
-    std::map<std::string, std::string> request;
+    std::map<std::string, std::string>	request;
 
   public:
-    METHOD method;
-    std::string path;
-    std::string httpV;
+    METHOD		method;
+    std::string	path;
+    std::string	httpV;
+	ConfigFile	config;
 
-    // this is for config file
-    std::vector<int> listen;
-    std::string server_name;
-    std::string host;
-    std::string root;
-    int client_max_body_size;
-    std::string index;
-    std::map<int, std::string> error_page;
-    std::vector<location> locations;
-    std::vector<std::string> cgi_path;
-    std::vector<std::string> cgi_ext;
-
-    void setRequest(const std::string &req);
-    const std::map<std::string, std::string> &getRequest() const;
-    void  init_the_header_conf_default(Request &request);
-    void  parse_config_file(Request &request, char *av);
+    void	setRequest(const std::string &req);
+    const	std::map<std::string, std::string> &getRequest() const;
 };
+
 
 // ****************************************************************************** //
 //                                 Response Class                                 //

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/04 10:40:41 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/05 17:19:01 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,12 +88,12 @@ typedef struct s_clientState {
     std::string	request;
     size_t		bytes_received;
     size_t		content_length;
-    bool		doesGetContentLength;
+    bool		isPostRequest;
     bool		headers_complete;
     bool		request_complete;
     bool		isHeaderSent;
 
-	s_clientState(): fd(-1), bytes_received(0), content_length(0), doesGetContentLength(false), headers_complete(false), request_complete(false), isHeaderSent(false) {};
+	s_clientState(): fd(-1), bytes_received(0), content_length(0), isPostRequest(false), headers_complete(false), request_complete(false), isHeaderSent(false) {};
 
 } t_clientState;
 
@@ -112,7 +112,9 @@ class Server : public Webserv {
     void	setNonBlocking(int fd);
     bool	isCompleteRequest(std::string &request);
     size_t	getContentLength(std::string &request);
-	void	sendResponse();
+	void	setUpNewConnection(int epfd, int serverFd, epoll_event ev);
+	bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
+	void	sendResponse(int epfd, int notifiedFd, Request &request);
     void	run(Request &req);
 };
 

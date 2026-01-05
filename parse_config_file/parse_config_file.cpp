@@ -20,17 +20,17 @@ void   parse_location(std::vector<std::string> &tokens, std::vector<std::string>
     i++;
     location_to_push.path = *i;
     i++;
-    if ((*i).compare("{"))
+    if (i->compare("{"))
         throw std::runtime_error("error syntax (config file {)");
     i++;
     while (i != tokens.end())
     {
-        if (!(*i).compare("allow_methods"))
+        if (!i->compare("allow_methods"))
         {
             i++;
-            while (i != tokens.end() && (*i).compare(";"))
+            while (i != tokens.end() && i->compare(";"))
             {
-                if ((*i).compare("delete") && (*i).compare("post") && (*i).compare("get"))
+                if (i->compare("delete") && i->compare("post") && i->compare("get"))
                     throw std::runtime_error("error syntax (config file allow_methods)");
                 location_to_push.allow_methods.push_back(*i);
                 i++;
@@ -38,33 +38,39 @@ void   parse_location(std::vector<std::string> &tokens, std::vector<std::string>
             if (i == tokens.end())
                 throw std::runtime_error("error syntax (config file allow_methods)");
         }
-        else if (!(*i).compare("autoindex"))
+        else if (!i->compare("autoindex"))
         {
             i++;
-            if ((*i).compare("on") && (*i).compare("off"))
+            if (i->compare("on") && i->compare("off"))
                 throw std::runtime_error("error syntax (config file autoindex)");
-            if (!(*i).compare("on"))
+            if (!i->compare("on"))
                 location_to_push.autoindex = true;
-            else if (!(*i).compare("off"))
+            else if (!i->compare("off"))
                 location_to_push.autoindex = false;
             i++;
-            if ((*i).compare(";"))
+            if (i->compare(";"))
                 throw std::runtime_error("error syntax (config file autoindex)");
         }
-        else if (!(*i).compare("root") || !(*i).compare("return") || !(*i).compare("index"))
+        else if (!i->compare("root") || !i->compare("return") || !i->compare("index"))
         {
             i++;
-            request.server_name = *i;
+			if (!(i - 1)->compare("root"))
+            	location_to_push.root = *i;
+			else if (!(i - 1)->compare("return"))
+            	location_to_push.return_to = *i;
+			else if (!(i - 1)->compare("index"))
+            	location_to_push.index = *i;
             i++;
-            if ((*i).compare(";"))
+            if (i->compare(";"))
                 throw std::runtime_error("error syntax (config file [root] [return] [index])");
         }
-        else if (!(*i).compare("}"))
+        else if (!i->compare("}"))
             break;
         else
             throw std::runtime_error("error syntax (config file)");
         i++;
     }
+	request.locations.push_back(location_to_push);
 }
 
 
@@ -94,7 +100,7 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
                     if (!isdigit((*i)[j]))
                         throw std::runtime_error("error syntax (config file listen)");
                 }
-                int n = atoi((*i).c_str());
+                int n = atoi(i->c_str());
                 if (std::find(request.listen.begin(), request.listen.end(), n) != request.listen.end())
                     throw std::runtime_error("error syntax (config file listen)");
                 if (index == 0)
@@ -105,15 +111,20 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
                 else
                     request.listen.push_back(n);
                 i++;
-                if ((*i).compare(";") || n < 0 || n > 65535)
+                if (i->compare(";") || n < 0 || n > 65535)
                     throw std::runtime_error("error syntax (config file listen)");
             }
             else if (!i->compare("server_name") || !i->compare("root") || !i->compare("index"))
             {
                 i++;
-                request.server_name = *i;
+				if (!(i - 1)->compare("server_name"))
+                	request.server_name = *i;
+				else if (!(i - 1)->compare("root"))
+                	request.root = *i;
+				else if (!(i - 1)->compare("index"))
+                	request.index = *i;
                 i++;
-                if ((*i).compare(";"))
+                if (i->compare(";"))
                     throw std::runtime_error("error syntax (config file [server_name] [root] [index])");
             }
             else if (!i->compare("client_max_body_size"))
@@ -124,20 +135,20 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
                     if (!isdigit((*i)[j]))
                         throw std::runtime_error("error syntax (config file client_max_body_size)");
                 }
-                request.client_max_body_size = atoi((*i).c_str());
+                request.client_max_body_size = atoi(i->c_str());
                 i++;
-                if ((*i).compare(";"))
+                if (i->compare(";"))
                     throw std::runtime_error("error syntax (config file client_max_body_size)");
             }
             else if (!i->compare("host"))
             {
                 i++;
                 struct sockaddr_in sa;
-                if (inet_pton(AF_INET, (*i).c_str(), &(sa.sin_addr)) != 1)
+                if (inet_pton(AF_INET, i->c_str(), &(sa.sin_addr)) != 1)
                     throw std::runtime_error("error syntax (config file host)");
                 request.host = *i;
                 i++;
-                if ((*i).compare(";"))
+                if (i->compare(";"))
                     throw std::runtime_error("error syntax (config file host)");
             }
             else if (!i->compare("error_page"))
@@ -149,9 +160,9 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
                         throw std::runtime_error("error syntax (config file error_page)");
                 }
                 i++;
-                request.error_page[atoi((*i).c_str())] = *i;
+                request.error_page[atoi(i->c_str())] = *i;
                 i++;
-                if ((*i).compare(";"))
+                if (i->compare(";"))
                     throw std::runtime_error("error syntax (config file error_page)");
             }
             else if (!i->compare("location"))
@@ -159,7 +170,7 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
             else if (!i->compare("cgi_path"))
             {
                 i++;
-                while (i != tokens.end() && (*i).compare(";"))
+                while (i != tokens.end() && i->compare(";"))
                 {
                     request.cgi_path.push_back(*i);
                     i++;
@@ -170,7 +181,7 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Req
             else if (!i->compare("cgi_ext"))
             {
                 i++;
-                while (i != tokens.end() && (*i).compare(";"))
+                while (i != tokens.end() && i->compare(";"))
                 {
                     request.cgi_ext.push_back(*i);
                     i++;

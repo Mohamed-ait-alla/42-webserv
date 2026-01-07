@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 18:25:17 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/07 08:59:57 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,24 +98,34 @@ typedef struct s_clientState {
 } t_clientState;
 
 class Server : public Webserv {
+	private:
+		int								_sockfd;
+		int								_epollfd;
+		int								_port;
+		std::string						_host;
+		struct sockaddr_in				_serverAddr;
 
-  private:
-    int _sockfd;
+	public:
+		std::map<int, t_clientState>	clients;
 
-  public:
-    std::map<int, t_clientState>	clients;
+		Server();
+		Server(std::string& host, int port);
 
-    Server();
-
-    int		getSockFd() const;
-    void	setSockFd(int fd);
-    void	setNonBlocking(int fd);
-    bool	isCompleteRequest(std::string &request);
-    size_t	getContentLength(std::string &request);
-	void	setUpNewConnection(int epfd, int serverFd, epoll_event ev);
-	bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
-	void	sendResponse(int epfd, int notifiedFd, Request &request);
-    void	run(Request &req);
+		int		getSockFd() const;
+		void	setSockFd(int fd);
+		void	setNonBlocking(int fd);
+		bool	isCompleteRequest(std::string &request);
+		size_t	getContentLength(std::string &request);
+		void	setUpNewConnection(int epfd, int serverFd, epoll_event ev);
+		bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
+		void	sendResponse(int epfd, int notifiedFd, Request &request);
+		void	initServerAddress();
+		void	createServerSocket();
+		void	bindServerSocket();
+		void	startListening();
+		void	createEpollInstance();
+		void	addServerToEpoll();
+		void	run(Request &req);
 };
 
 

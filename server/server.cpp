@@ -6,14 +6,23 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/06 09:29:17 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/07 09:06:46 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
 // Default constructor
-Server::Server() { _sockfd = -1; }
+Server::Server()
+{
+	_sockfd = -1;
+}
+
+Server::Server(std::string& host, int port)
+ : _sockfd(-1), _epollfd(-1), _port(port), _host(host)
+{
+	std::memset(&_serverAddr, 0, sizeof(_serverAddr));
+}
 
 // getter
 int	Server::getSockFd() const
@@ -28,6 +37,57 @@ void	Server::setSockFd(int fd)
 }
 
 // * Methods
+
+void	Server::initServerAddress()
+{
+	_serverAddr.sin_family = IPv4;
+	_serverAddr.sin_addr.s_addr = inet_addr(_host.c_str());
+	_serverAddr.sin_port = htons(_port);
+	std::memset(_serverAddr.sin_zero, 0, sizeof(_serverAddr.sin_zero));
+}
+
+void	Server::createServerSocket()
+{
+	int	opt = 1;
+
+	_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (_sockfd < 0)
+		throwError("socket()");
+
+	if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+		throwError("setsockopt()");
+	
+	setNonBlocking(_sockfd);
+}
+
+void	Server::bindServerSocket()
+{
+	if (bind(_sockfd, (struct sockaddr *)&_serverAddr, sizeof(_serverAddr)) < 0)
+		throwError("bind()");
+}
+
+void	Server::startListening()
+{
+	if (listen(_sockfd, BACK_LOG) < 0)
+		throwError("bind()");
+}
+
+void	Server::createEpollInstance()
+{
+	_epollfd = epoll_create(1024);
+	if (_epollfd < 0)
+		throwError("epoll_create()");
+}
+
+void	Server::addServerToEpoll()
+{
+	struct epoll_event ev;
+	ev.events = EPOLLIN;
+	ev.data.fd = _sockfd;
+	
+	if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, _sockfd, &ev) < 0)
+		throwError("epoll_ctl(_sockfd)");
+}
 
 void	Server::setNonBlocking(int fd)
 {
@@ -153,68 +213,77 @@ void	Server::sendResponse(int epfd, int notifiedFd, Request &request)
 				return ;
 		}
 		std::memset(buffer, '\0', sizeof(buffer));
-	}	
+	}
 }
 
 void	Server::run(Request &req) {
-	int					server_fd;
-	int					epoll_fd;
+	// int					server_fd;
+	// int					epoll_fd;
 	int					n_fds;
-	int					opt;
-	struct sockaddr_in	server_addr;
-	socklen_t			server_len;
+	// int					opt;
+	// struct sockaddr_in	server_addr;
+	// socklen_t			server_len;
 	struct epoll_event	ev, events[MAX_EVENTS];
 
 	// Initialization 
-	server_addr.sin_family = IPv4;
-	server_addr.sin_addr.s_addr = inet_addr(req.config.host.c_str());
-	server_addr.sin_port = htons(req.config.listen[0]);
-	std::memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
-	opt = 1;
-	server_len = sizeof(server_addr);
+	// server_addr.sin_family = IPv4;
+	// server_addr.sin_addr.s_addr = inet_addr(req.config.host.c_str());
+	// server_addr.sin_port = htons(req.config.listen[0]);
+	// std::memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
+	initServerAddress();
+	// opt = 1;
+	// server_len = sizeof(_serverAddr);
 
 	// Socket Creation
-	server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_fd < 0)
-		throwError("socket()");
-	
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-		throwError("setsocketopt()");
+	createServerSocket();
+	// _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	// std::cout << "_server fd : " << _sockfd << std::endl;
+	// if (_sockfd < 0)
+	// 	throwError("socket()");
 
-	// Set socketfd to Non-blocking mode
-	setNonBlocking(server_fd);
-	
+	// if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	// 	throwError("setsocketopt()");
+
+	// // Set socketfd to Non-blocking mode
+	// setNonBlocking(_sockfd);
+
 	// Socket Identification
-	if (bind(server_fd, (struct sockaddr *)&server_addr, server_len) < 0)
-		throwError("bind()");
+	bindServerSocket();
+	// if (bind(_sockfd, (struct sockaddr *)&_serverAddr, server_len) < 0)
+	// 	throwError("bind()");
 
 	// Listen for incoming connections
-	if (listen(server_fd, BACK_LOG) < 0)
-		throwError("listen()");
-	
-	epoll_fd = epoll_create(1024);
-	if (epoll_fd < 0)
-		throwError("epoll_create()");
-	
-	ev.events = EPOLLIN;
-	ev.data.fd = server_fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &ev) < 0)
-		throwError("epoll_ctl(server_fd)");
-	
-	 std::cout << "🚀 Server running on port " << req.config.listen[0] << std::endl;
-		
+	startListening();
+	// if (listen(_sockfd, BACK_LOG) < 0)
+	// 	throwError("listen()");
+
+	createEpollInstance();
+	// epoll_fd = epoll_create(1024);
+	// if (epoll_fd < 0)
+	// 	throwError("epoll_create()");
+	// std::cout << "_server fd : " << _sockfd << std::endl;
+	// ev.events = EPOLLIN;
+	// ev.data.fd = _sockfd;
+	// std::cout << "_server fd : " << _sockfd << std::endl;
+
+	// if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, _sockfd, &ev) < 0)
+	// 	throwError("epoll_ctl(server_fd)");
+	addServerToEpoll();
+
+	std::cout << "🚀 Server running on " << _host << ":" << _port << std::endl;
+
 	bool	running = true;
 	while (running)
 	{
-		n_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+		n_fds = epoll_wait(_epollfd, events, MAX_EVENTS, -1);
 		if (n_fds < 0)
 			throwError("epoll_wait()");
 		
 		for (int i = 0; i < n_fds ; i++)
 		{
-			if (events[i].data.fd == server_fd) // case 1: new connection comes, we should accept it
+			if (events[i].data.fd == _sockfd) // case 1: new connection comes, we should accept it
 			{
-				setUpNewConnection(epoll_fd, server_fd, ev);
+				setUpNewConnection(_epollfd, _sockfd, ev);
 			}
 			else // case 2: handle client events (read/write/error)
 			{
@@ -222,17 +291,17 @@ void	Server::run(Request &req) {
 				
 				if (events[i].events & EPOLLIN) // Read event => Request received
 				{
-					if (!recvRequest(epoll_fd, fd, ev))
+					if (!recvRequest(_epollfd, fd, ev))
 						continue;
 					req.setRequest(clients[fd].request);
 				}
 				else if (events[i].events & EPOLLOUT) // Write event => Send response
 				{
-					sendResponse(epoll_fd, fd, req);
+					sendResponse(_epollfd, fd, req);
 				}
 				else // Error event => EPOLLERR
 				{
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+					epoll_ctl(_epollfd, EPOLL_CTL_DEL, fd, NULL);
 					close (fd);
 					continue;
 				}
@@ -240,6 +309,6 @@ void	Server::run(Request &req) {
 		}
 	}
 
-	close(server_fd);
-	close(epoll_fd);
+	close(_sockfd);
+	close(_epollfd);
 }

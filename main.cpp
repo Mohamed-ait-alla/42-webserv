@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/23 16:52:42 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 18:24:54 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/06 14:56:36 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,13 @@ int main(int ac, char **av) {
 
   try {
     Request request;
-    Server server;
+    // Server server;
     request.config.init_the_header_conf_default();
     if (ac > 2)
       throw std::runtime_error("./program [config file]");
     else if (ac == 2)
       request.config.parse_config_file(av[1]);
+	Server server(request.config.host, request.config.listen[0]);
     server.run(request);
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

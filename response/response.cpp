@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/08 10:37:05 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/08 10:54:22 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,24 +169,25 @@ void Response::GET_METHOD(Request &req) {
 // * POST METHOD
 void Response::POST_METHOD(Request &req) {
   // todo: edit this
-  if (!req.config.locations.empty()) {
-    if (this->thisLocationIsInConfigFile(req, req.path)) {
-      if (this->checkAllowMethodsOfLocation(
-              req.config.locations[this->getIndexLocation()].allow_methods,
-              "get")) {
-        // * change root path from config file when i found location and method
-        req.config.root = req.config.locations[this->getIndexLocation()].root;
-        // * change path from config file when i found location and method
-        req.path =
-            req.config.locations[this->getIndexLocation()]
-                .path.append("/")
-                .append(req.config.locations[this->getIndexLocation()].index);
-      } else {
-        this->setStatusCode(METHOD_NOT_ALLOWED);
-        req.path = req.config.error_page[METHOD_NOT_ALLOWED];
-      }
-    }
-  }
+  // if (!req.config.locations.empty()) {
+  //   if (this->thisLocationIsInConfigFile(req, req.path)) {
+  //     if (this->checkAllowMethodsOfLocation(
+  //             req.config.locations[this->getIndexLocation()].allow_methods,
+  //             "get")) {
+  //       // * change root path from config file when i found location and
+  //       method req.config.root =
+  //       req.config.locations[this->getIndexLocation()].root;
+  //       // * change path from config file when i found location and method
+  //       req.path =
+  //           req.config.locations[this->getIndexLocation()]
+  //               .path.append("/")
+  //               .append(req.config.locations[this->getIndexLocation()].index);
+  //     } else {
+  //       this->setStatusCode(METHOD_NOT_ALLOWED);
+  //       req.path = req.config.error_page[METHOD_NOT_ALLOWED];
+  //     }
+  //   }
+  // }
 
   // * get content type to decide which response will send in post method
   std::string contentType = req.getRequest().count("Content-Type")
@@ -227,7 +228,7 @@ void Response::POST_METHOD(Request &req) {
         return;
       }
 
-      std::string fullPath = (req.config.root + "uploads/");
+      std::string fullPath = (req.config.root + "/uploads/");
 
       // * check the directory of upload
       std::ifstream uploadDir(fullPath.c_str());
@@ -374,7 +375,7 @@ void Response::addDataToBody(const Request &req) {
   // todo: get the root path
   std::string fullPath(req.config.root);
 
-  fullPath.append("post-request-data.html");
+  fullPath.append("/post-request-data.html");
 
   // ? std::ios::out open the file for write event and if not exist created
   // ? std::ios::trunc remove all things in file

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/08 10:54:22 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/08 12:03:19 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,6 @@ void Response::GET_METHOD(Request &req) {
 
   // * check permisions of method that come from config file
   if (!req.config.locations.empty()) {
-
     if (this->thisLocationIsInConfigFile(req, req.path)) {
       if (this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
@@ -135,10 +134,9 @@ void Response::GET_METHOD(Request &req) {
           // * method
           req.config.root = req.config.locations[this->getIndexLocation()].root;
           // * change path from config file when i found location and method
-          req.path =
-              req.config.locations[this->getIndexLocation()]
-                  .path.append("/")
-                  .append(req.config.locations[this->getIndexLocation()].index);
+          req.path = req.config.locations[this->getIndexLocation()].path +
+                     std::string("/") +
+                     (req.config.locations[this->getIndexLocation()].index);
         }
       } else {
         this->setStatusCode(METHOD_NOT_ALLOWED);

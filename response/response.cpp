@@ -6,14 +6,23 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/08 18:16:57 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/08 20:12:39 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
 // * Default Constructor
-Response::Response() { this->setMimeTypes(); }
+Response::Response()
+
+    : status_code(OK), statusLine(""), contentType(""), contentLength(""),
+      headers(""), indexLocation(-1), isRedirection(false)
+// todo: bodyfd i need to set him -1 here
+// , bodyFd(-1)
+
+{
+  this->setMimeTypes();
+}
 
 // * Getters & Setters
 // * status code
@@ -80,20 +89,34 @@ void Response::setHeaders(const Request &req) {
   // if (!req.config.locations[getIndexLocation()].return_to.empty()) {
   //   this->headers = "HTTP/1.1 302 Found\r\n"
   //                   "Server: webserv/1.0\r\n"
-  //                   "Location: https://www.youtube.com/watch?v=ADBV0_848UE\r\n"
+  //                   "Location:
+  //                   https://www.youtube.com/watch?v=ADBV0_848UE\r\n"
   //                   "\r\n";
 
   //   return;
   // }
 
-  this->headers = this->getStatusLine() + getServerName(req) +
-                  this->getContentType() + getContentLength() + "\r\n";
+  // * check if is redirection
+  if (this->getIsRedirection() && this->getStatusCode() == FOUND) {
+    this->headers = this->getStatusLine() + getServerName(req) + "Location: " +
+                    req.config.locations[this->getIndexLocation()].return_to +
+                    "\r\n";
+    this->setIsRedirection(false);
+  } else {
+    this->headers = this->getStatusLine() + getServerName(req) +
+                    this->getContentType() + getContentLength() + "\r\n";
+  }
 }
 
 // * index location
 size_t Response::getIndexLocation() const { return this->indexLocation; }
 
 void Response::setIndexLocation(size_t &value) { this->indexLocation = value; }
+
+// * is redirection
+bool Response::getIsRedirection() const { return this->isRedirection; }
+
+void Response::setIsRedirection(bool value) { this->isRedirection = value; }
 
 void Response::setBodyFd(int &fd) { this->bodyFd = fd; }
 int Response::getBodyFd() const { return this->bodyFd; }
@@ -116,14 +139,29 @@ void Response::GET_METHOD(Request &req) {
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
       // todo: check return in config file
-      // if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
-      //   // * set default status code
-      //   this->setStatusCode(FOUND);
-      //   req.path = req.config.locations[this->getIndexLocation()].return_to;
-      //   // * Generate response (only headers)
-      //   generateResponse(req);
-      //   return;
-      // }
+      if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
+        // * Generate response (only headers)
+        this->setIsRedirection(true);
+        this->setStatusCode(FOUND);
+        this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
+        this->setHeaders(req);
+
+        // std::cout
+        //     << "-----------------------path of file------------------------"
+        //     << std::endl;
+        // std::cout << fullPath << std::endl;
+        // std::cout
+        //     << "-----------------------path of file------------------------"
+        //     << std::endl;
+
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+        std::cout << getHeaders() << std::endl;
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+
+        return;
+      }
       if (this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
               "get")) {

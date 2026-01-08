@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/08 10:19:05 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/08 19:59:26 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,6 +198,7 @@ class Response : public Webserv {
     std::string contentLength;
     std::string headers;
     size_t indexLocation;
+    bool isRedirection;
     int bodyFd;
 
   public:
@@ -228,6 +229,9 @@ class Response : public Webserv {
   
     size_t getIndexLocation() const;
     void setIndexLocation(size_t &value);
+
+    bool getIsRedirection() const;
+    void setIsRedirection(bool value);
 
     void setBodyFd(int &fd);
     int getBodyFd() const;

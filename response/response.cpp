@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/09 13:00:16 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/09 20:45:37 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,6 +133,7 @@ void Response::GET_METHOD(Request &req) {
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
       // todo: check return in config file
+      // * redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
         // * Generate response (only headers)
         this->setIsRedirection(true);
@@ -160,7 +161,10 @@ void Response::GET_METHOD(Request &req) {
               req.config.locations[this->getIndexLocation()].allow_methods,
               "get")) {
         // * generate page of auto index
-        if (req.config.locations[this->getIndexLocation()].autoindex) {
+        if (req.config.locations[this->getIndexLocation()].autoindex &&
+            !this->isFile(
+                req.config.locations[this->getIndexLocation()].root +
+                req.config.locations[this->getIndexLocation()].path)) {
           // todo: 3lach makidlholch hnaaaa
           std::string pathOfAutoIndex =
               req.config.locations[this->getIndexLocation()].root +
@@ -172,19 +176,27 @@ void Response::GET_METHOD(Request &req) {
         }
         // * check if autoindex is off and we dont have a index html
         else if (!req.config.locations[this->getIndexLocation()].autoindex &&
-                 req.config.locations[this->getIndexLocation()].index.empty()) {
+                 req.config.locations[this->getIndexLocation()].index.empty() &&
+                 !this->isFile(
+                     req.config.locations[this->getIndexLocation()].root +
+                     req.config.locations[this->getIndexLocation()].path)) {
           // todo: 3lach makidlholch hnaaaa
           std::cout << "################page is forbidden################\n";
           this->setStatusCode(FORBIDDEN);
           req.path = req.config.error_page[FORBIDDEN];
         } else {
-          // * change root path from config file when i found location and
-          // * method
-          req.config.root = req.config.locations[this->getIndexLocation()].root;
-          // * change path from config file when i found location and method
-          req.path = req.config.locations[this->getIndexLocation()].path +
-                     std::string("/") +
-                     (req.config.locations[this->getIndexLocation()].index);
+          if (!this->isFile(
+                  req.config.locations[this->getIndexLocation()].root +
+                  req.config.locations[this->getIndexLocation()].path)) {
+            // * change root path from config file when i found location and
+            // * method
+            req.config.root =
+                req.config.locations[this->getIndexLocation()].root;
+            // * change path from config file when i found location and method
+            req.path = req.config.locations[this->getIndexLocation()].path +
+                       std::string("/") +
+                       (req.config.locations[this->getIndexLocation()].index);
+          }
         }
       } else {
         this->setStatusCode(METHOD_NOT_ALLOWED);
@@ -723,7 +735,7 @@ bool Response::isPathStartBySlash(const std::string &path) {
 }
 
 // * check if a file
-bool Response::isFile(std::string &path) {
+bool Response::isFile(std::string path) {
   struct stat buffer;
 
   // * get all status of path (size, type, ...)

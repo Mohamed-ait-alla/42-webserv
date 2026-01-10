@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/09 22:18:35 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/10 10:20:15 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ void Response::GET_METHOD(Request &req) {
   // * set status code as default
   this->setStatusCode(OK);
 
-  // * check permisions of method that come from config file
+  // * check roles if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
       // todo: check return in config file
@@ -229,26 +229,53 @@ void Response::GET_METHOD(Request &req) {
 
 // * POST METHOD
 void Response::POST_METHOD(Request &req) {
-  // todo: edit this
-  // if (!req.config.locations.empty()) {
-  //   if (this->thisLocationIsInConfigFile(req, req.path)) {
-  //     if (this->checkAllowMethodsOfLocation(
-  //             req.config.locations[this->getIndexLocation()].allow_methods,
-  //             "get")) {
-  //       // * change root path from config file when i found location and
-  //       method req.config.root =
-  //       req.config.locations[this->getIndexLocation()].root;
-  //       // * change path from config file when i found location and method
-  //       req.path =
-  //           req.config.locations[this->getIndexLocation()]
-  //               .path.append("/")
-  //               .append(req.config.locations[this->getIndexLocation()].index);
-  //     } else {
-  //       this->setStatusCode(METHOD_NOT_ALLOWED);
-  //       req.path = req.config.error_page[METHOD_NOT_ALLOWED];
-  //     }
-  //   }
-  // }
+  // todo: edit this to post method
+  // * check roles if location is in config file
+  if (!req.config.locations.empty()) {
+    if (this->thisLocationIsInConfigFile(req, req.path)) {
+      // todo: check return in config file
+      // * redirection
+      if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
+        // * Generate response (only headers)
+        this->setIsRedirection(true);
+        this->setStatusCode(FOUND);
+        this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
+        this->setHeaders(req);
+
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+        std::cout << getHeaders() << std::endl;
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+
+        return;
+      }
+      // * check method
+      if (this->checkAllowMethodsOfLocation(
+              req.config.locations[this->getIndexLocation()].allow_methods,
+              "post")) {
+        // * check if is file or directory
+        bool isFile =
+            this->isFile(req.config.locations[this->getIndexLocation()].root +
+                         req.config.locations[this->getIndexLocation()].path);
+        // * check if the path is file
+        if (!isFile) {
+          this->setStatusCode(FORBIDDEN);
+          req.path = req.config.error_page[FORBIDDEN];
+          // * Generate response
+          this->generateResponse(req);
+          return;
+        }
+
+      } else {
+        this->setStatusCode(METHOD_NOT_ALLOWED);
+        req.path = req.config.error_page[METHOD_NOT_ALLOWED];
+        // * Generate response
+        this->generateResponse(req);
+        return;
+      }
+    }
+  }
 
   // * get content type to decide which response will send in post method
   std::string contentType = req.getRequest().count("Content-Type")
@@ -373,6 +400,61 @@ void Response::POST_METHOD(Request &req) {
 
 // * DELETE METHOD
 void Response::DELETE_METHOD(Request &req) {
+
+  // * check roles if location is in config file
+  if (!req.config.locations.empty()) {
+    if (this->thisLocationIsInConfigFile(req, req.path)) {
+      std::cout << "==========================================================="
+                   "=========\n";
+      std::cout << "==========================================================="
+                   "=========\n";
+      // todo: check return in config file
+      // * redirection
+      if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
+        // * Generate response (only headers)
+        this->setIsRedirection(true);
+        this->setStatusCode(FOUND);
+        this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
+        this->setHeaders(req);
+
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+        std::cout << getHeaders() << std::endl;
+        std::cout << "-----------------------Headers------------------------"
+                  << std::endl;
+
+        return;
+      }
+      // * check method
+      if (this->checkAllowMethodsOfLocation(
+              req.config.locations[this->getIndexLocation()].allow_methods,
+              "delete")) {
+        // todo: move all logic here and remove this->generateResponse(req);
+        // todo: from else section
+        // // * check if is file or directory
+        // bool isFile =
+        //     this->isFile(req.config.locations[this->getIndexLocation()].root
+        //     +
+        //                  req.config.locations[this->getIndexLocation()].path);
+        // // * check if the path is file
+        // if (!isFile) {
+        //   this->setStatusCode(FORBIDDEN);
+        //   req.path = req.config.error_page[FORBIDDEN];
+        //   // * Generate response
+        //   this->generateResponse(req);
+        //   return;
+        // }
+
+      } else {
+        this->setStatusCode(METHOD_NOT_ALLOWED);
+        req.path = req.config.error_page[METHOD_NOT_ALLOWED];
+        // * Generate response
+        this->generateResponse(req);
+        return;
+      }
+    }
+  }
+
   // * check if we have the file / folder
   // * remove slash from begin of req path
   std::ifstream file((req.config.root + req.path).c_str());

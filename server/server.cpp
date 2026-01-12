@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/07 15:27:09 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/12 17:02:47 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,17 @@ Server::Server(std::string& host, int port)
  : _sockfd(-1), _epollfd(-1), _port(port), _host(host)
 {
 	std::memset(&_serverAddr, 0, sizeof(_serverAddr));
+}
+
+Server::~Server()
+{
+	for (size_t i = 0; i < _serverSockets.size(); i++)
+	{
+		close(_serverSockets[i]);
+	}
+	
+	if (_epollfd >= 0)
+		close(_epollfd);
 }
 
 // getter
@@ -82,11 +93,15 @@ void	Server::createEpollInstance()
 void	Server::addServerToEpoll()
 {
 	struct epoll_event ev;
-	ev.events = EPOLLIN;
-	ev.data.fd = _sockfd;
 	
-	if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, _sockfd, &ev) < 0)
-		throwError("epoll_ctl(_sockfd)");
+	for (size_t i = 0; i < _serverSockets.size(); i++)
+	{
+		ev.events = EPOLLIN;
+		ev.data.fd = _serverSockets[i];
+		
+		if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, _serverSockets[i], &ev) < 0)
+			throwError("epoll_ctl(_serverSockets)");
+	}
 }
 
 void	Server::setNonBlocking(int fd)
@@ -139,7 +154,7 @@ void	Server::setUpNewConnection(int epfd, int serverFd, epoll_event& ev)
 	clientState.fd = clientFd;
 	clients[clientFd] = clientState;
 
-	std::cout << "\n✅ New connection (fd: " << clientFd << ")\n" << std::endl;
+	std::cout << "\n✅ New connection accpeted (servfd: " << _sockfd << " clientfd: " << clientFd << ")\n" << std::endl;
 }
 
 bool	Server::recvRequest(int epfd, int notifiedFd, epoll_event ev)
@@ -250,10 +265,17 @@ void	Server::processClientEvent(struct epoll_event& event, Request& req)
 
 void	Server::handleEpollEvents(int nfds, struct epoll_event* events, Request& req)
 {
+	std::vector<int>::iterator	serverFdIt;
+	(void)req;
+
 	for (int i = 0; i < nfds; i++)
 	{
-		if (events[i].data.fd == _sockfd)
+		serverFdIt = std::find(_serverSockets.begin(), _serverSockets.end(), events[i].data.fd);
+		if (serverFdIt != _serverSockets.end())
+		{
+			_sockfd = *(serverFdIt);
 			processServerEvent(events[i]);
+		}
 		else
 			processClientEvent(events[i], req);
 	}
@@ -262,17 +284,24 @@ void	Server::handleEpollEvents(int nfds, struct epoll_event* events, Request& re
 void	Server::run(Request &req) {
 	int	n_fds;
 
-	// init server address
-	initServerAddress();
-
-	// socket creation
-	createServerSocket();
-
-	// socket identification
-	bindServerSocket();
-
-	// socket listening
-	startListening();
+	for(size_t i = 0; i < req.config.listen.size(); i++)
+	{
+		_port = req.config.listen[i];
+		// init server address
+		initServerAddress();
+	
+		// socket creation
+		createServerSocket();
+	
+		// socket identification
+		bindServerSocket();
+	
+		// socket listening
+		startListening();
+		
+		_serverSockets.push_back(_sockfd);
+		std::cout << "🚀 Server running on " << _host << ":" << _port << std::endl;
+	}
 
 	// epoll's instance creation
 	createEpollInstance();
@@ -283,7 +312,7 @@ void	Server::run(Request &req) {
 	// running server and waiting for connections
 	struct epoll_event events[MAX_EVENTS];
 
-	std::cout << "🚀 Server running on " << _host << ":" << _port << std::endl;
+	// std::cout << "🚀 Server running on " << _host << ":" << _port << std::endl;
 
 	bool	running = true;
 	while (running)
@@ -293,7 +322,4 @@ void	Server::run(Request &req) {
 			throwError("epoll_wait()");
 		handleEpollEvents(n_fds, events, req);
 	}
-
-	close(_sockfd);
-	close(_epollfd);
 }

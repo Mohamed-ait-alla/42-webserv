@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/12 09:56:08 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/12 17:03:51 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,37 +107,39 @@ typedef struct s_clientState {
 } t_clientState;
 
 class Server : public Webserv {
-  private:
-    int _sockfd;
-    int _epollfd;
-    int _port;
-    std::string _host;
-    struct sockaddr_in _serverAddr;
+	private:
+		int 				_sockfd;
+		int 				_epollfd;
+		int 				_port;
+		std::string 		_host;
+		struct sockaddr_in	_serverAddr;
+		std::vector<int>	_serverSockets;
 
-  public:
-    std::map<int, t_clientState> clients;
+	public:
+		std::map<int, t_clientState> clients;
 
-    Server();
-    Server(std::string &host, int port);
+		Server();
+		Server(std::string &host, int port);
+		~Server();
 
-    int getSockFd() const;
-    void setSockFd(int fd);
-    void setNonBlocking(int fd);
-    bool isCompleteRequest(std::string &request);
-    size_t getContentLength(std::string &request);
-    void setUpNewConnection(int epfd, int serverFd, epoll_event &ev);
-    bool recvRequest(int epfd, int notifiedFd, epoll_event ev);
-    bool sendResponse(int epfd, int notifiedFd, Request &request);
-    void initServerAddress();
-    void createServerSocket();
-    void bindServerSocket();
-    void startListening();
-    void createEpollInstance();
-    void addServerToEpoll();
-    void handleEpollEvents(int nfds, struct epoll_event *events, Request &req);
-    void processClientEvent(struct epoll_event &event, Request &req);
-    void processServerEvent(struct epoll_event &ev);
-    void run(Request &req);
+		int		getSockFd() const;
+		void	setSockFd(int fd);
+		void	setNonBlocking(int fd);
+		bool	isCompleteRequest(std::string &request);
+		size_t	getContentLength(std::string &request);
+		void	setUpNewConnection(int epfd, int serverFd, epoll_event &ev);
+		bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
+		bool	sendResponse(int epfd, int notifiedFd, Request &request);
+		void	initServerAddress();
+		void	createServerSocket();
+		void	bindServerSocket();
+		void	startListening();
+		void	createEpollInstance();
+		void	addServerToEpoll();
+		void	handleEpollEvents(int nfds, struct epoll_event *events, Request &req);
+		void	processClientEvent(struct epoll_event &event, Request &req);
+		void	processServerEvent(struct epoll_event &ev);
+		void	run(Request &req);
 };
 
 // ******************************************************************************

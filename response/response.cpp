@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/10 10:25:34 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/12 10:53:29 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,21 @@ std::string Response::getContentLength() const { return this->contentLength; }
 std::string Response::getHeaders() const { return this->headers; }
 
 void Response::setHeaders(const Request &req) {
+  // * get content type to decide which headers will send it
+  std::string contentType = req.getRequest().count("Content-Type")
+                                ? req.getRequest().find("Content-Type")->second
+                                : "";
+
+  std::string sessionIdFromBrowser = this->parseFormURLEncoded(
+      req.getRequest().count("Cookie") ? req.getRequest().find("Cookie")->second
+                                       : "")["session_id"];
+  std::cout << "session_id from browser: " << sessionIdFromBrowser << std::endl;
+  std::string sessionIdFromServer =
+      req.getSession().count("session_id")
+          ? req.getSession().find("session_id")->second
+          : "";
+  std::cout << "session_id from server: " << sessionIdFromServer << std::endl;
+
   // * check if is redirection
   if (this->getIsRedirection() && this->getStatusCode() == FOUND) {
     this->headers = this->getStatusLine() + getServerName(req) + "Location: " +
@@ -95,7 +110,28 @@ void Response::setHeaders(const Request &req) {
   } else if (req.method == DELETE && this->getStatusCode() == NO_CONTENT) {
     // * this for delete response
     this->headers = this->getStatusLine() + getServerName(req) + "\r\n";
-  } else {
+  } else if (contentType == "application/x-www-form-urlencoded\r" &&
+             req.method == POST) { // * this for send Cookies
+    // * headers
+    this->headers = this->getStatusLine() + getServerName(req) +
+                    this->getContentType() +
+                    "Set-Cookie: session_id=" + sessionIdFromServer + "\r\n" +
+                    getContentLength() + "\r\n";
+  }
+
+  else if (!this->isUserInSession(req, sessionIdFromBrowser) &&
+           this->getStatusCode() == FOUND) { // * check auth by Cookies
+    this->headers = this->getStatusLine() + getServerName(req) +
+                    "Location: sign-in.html\r\n";
+  }
+
+  else if (this->isUserInSession(req, sessionIdFromBrowser) &&
+           this->getStatusCode() == FOUND) { // * check auth by Cookies
+    this->headers =
+        this->getStatusLine() + getServerName(req) + "Location: game.html\r\n";
+  }
+
+  else {
     // * this for normal response
     this->headers = this->getStatusLine() + getServerName(req) +
                     this->getContentType() + getContentLength() + "\r\n";
@@ -112,6 +148,7 @@ bool Response::getIsRedirection() const { return this->isRedirection; }
 
 void Response::setIsRedirection(bool value) { this->isRedirection = value; }
 
+// * Fd of Body
 void Response::setBodyFd(int &fd) { this->bodyFd = fd; }
 int Response::getBodyFd() const { return this->bodyFd; }
 
@@ -222,6 +259,31 @@ void Response::GET_METHOD(Request &req) {
   // }
   std::cout << "===============> req.config.root: " << req.config.root
             << std::endl;
+
+  // * check auth cookies of user
+  if (req.path == "/game.html") {
+    std::string sessionIdFromBrowser =
+        this->parseFormURLEncoded(req.getRequest().count("Cookie")
+                                      ? req.getRequest().find("Cookie")->second
+                                      : "")["session_id"];
+    if (!this->isUserInSession(req, sessionIdFromBrowser)) {
+      this->setStatusCode(FOUND);
+      this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
+      this->setHeaders(req);
+      return;
+    }
+  } else if (req.path == "/sign-in.html") {
+    std::string sessionIdFromBrowser =
+        this->parseFormURLEncoded(req.getRequest().count("Cookie")
+                                      ? req.getRequest().find("Cookie")->second
+                                      : "")["session_id"];
+    if (this->isUserInSession(req, sessionIdFromBrowser)) {
+      this->setStatusCode(FOUND);
+      this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
+      this->setHeaders(req);
+      return;
+    }
+  }
 
   // * Generate response
   this->generateResponse(req);
@@ -566,11 +628,41 @@ void Response::addDataToBody(const Request &req) {
       "    <div class=\"space-y-2\">\n"
       "      <!-- parsed data -->\n";
 
-  std::string afterPaseData = "    </div>\n"
-                              "  </div>\n"
-                              "</div>\n"
-                              "</body>\n"
-                              "</html>\n";
+  std::string afterPaseData =
+      "    </div>\n"
+      "  </div>\n"
+
+      "  <!-- Redirect Button -->\n"
+      "  <div class=\"mt-6 text-center\">\n"
+      "    <button id=\"goBtn\"\n"
+      "      class=\"bg-blue-600 hover:bg-blue-700 text-white font-semibold "
+      "px-6 py-2 rounded transition\">\n"
+      "      Go to Game (3)\n"
+      "    </button>\n"
+      "  </div>\n"
+
+      "  <script>\n"
+      "    let seconds = 3;\n"
+      "    const btn = document.getElementById('goBtn');\n"
+      "\n"
+      "    const timer = setInterval(() => {\n"
+      "      seconds--;\n"
+      "      btn.textContent = `Go to Game (${seconds})`;\n"
+      "\n"
+      "      if (seconds <= 0) {\n"
+      "        clearInterval(timer);\n"
+      "        window.location.href = '/game.html';\n"
+      "      }\n"
+      "    }, 1000);\n"
+      "\n"
+      "    btn.addEventListener('click', () => {\n"
+      "      window.location.href = '/game.html';\n"
+      "    });\n"
+      "  </script>\n"
+
+      "</div>\n"
+      "</body>\n"
+      "</html>\n";
 
   // todo: get the root path
   std::string fullPath(req.config.root);
@@ -830,6 +922,21 @@ bool Response::isFile(std::string path) {
 
   // * check the path is file or not
   if (S_ISREG(buffer.st_mode)) {
+    return true;
+  }
+
+  return false;
+}
+
+// * is user in session
+bool Response::isUserInSession(const Request &req, std::string session_id) {
+  // * get session id from server
+  std::string sessionIdFromServer =
+      req.getSession().count("session_id")
+          ? req.getSession().find("session_id")->second
+          : "";
+
+  if ((sessionIdFromServer + "\r") == session_id) {
     return true;
   }
 

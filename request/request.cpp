@@ -6,14 +6,27 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/05 10:14:13 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/12 10:19:43 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/webserv.hpp"
 
+// * Default Constructor
+Request::Request() {
+  // * generate a session_id for cookies
+  srand(time(0));
+  int sessionId = rand();
+
+  // * change sessionId to str
+  std::stringstream ss;
+  ss << sessionId;
+  this->setSession("session_id", ss.str());
+}
+
 // * Setters & Getters
 void Request::setRequest(const std::string &req) {
+  bool iFoundCookie = false;
   std::stringstream ss(req);
 
   // * get method & path & http version
@@ -46,6 +59,11 @@ void Request::setRequest(const std::string &req) {
 
     key = line.substr(0, pos);
     value = line.substr(pos + 2, line.length());
+
+    // * check if client send cookies
+    if (key == "Cookie") {
+      iFoundCookie = true;
+    }
 
     this->request[key] = value;
   }
@@ -125,8 +143,25 @@ void Request::setRequest(const std::string &req) {
       this->request.erase(key);
     }
   }
+
+  // ! remove Cookies from request (because when the user remove it from browser
+  // ! it still store it in request map)
+  if (!iFoundCookie) {
+    this->request.erase("Cookie");
+  }
 }
 
 const std::map<std::string, std::string> &Request::getRequest() const {
   return this->request;
+}
+
+// * Session
+
+void Request::setSession(const std::string session_id,
+                         const std::string value) {
+  this->session[session_id] = value;
+}
+
+const std::map<std::string, std::string> &Request::getSession() const {
+  return this->session;
 }

@@ -37,6 +37,31 @@ email=mdahani%40student.1337.ma&password=1337        </pre>
 <span class="text-blue-400 font-medium">password</span><span class="text-white">1337</span></div>
     </div>
   </div>
+  <!-- Redirect Button -->
+  <div class="mt-6 text-center">
+    <button id="goBtn"
+      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded transition">
+      Go to Game (3)
+    </button>
+  </div>
+  <script>
+    let seconds = 3;
+    const btn = document.getElementById('goBtn');
+
+    const timer = setInterval(() => {
+      seconds--;
+      btn.textContent = `Go to Game (${seconds})`;
+
+      if (seconds <= 0) {
+        clearInterval(timer);
+        window.location.href = '/game.html';
+      }
+    }, 1000);
+
+    btn.addEventListener('click', () => {
+      window.location.href = '/game.html';
+    });
+  </script>
 </div>
 </body>
 </html>

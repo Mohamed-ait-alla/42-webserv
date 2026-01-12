@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/09 20:17:30 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/12 09:56:08 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define WEBSERV_HPP
 #include <algorithm>
 #include <arpa/inet.h>
+#include <bits/stdc++.h>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
@@ -181,6 +182,7 @@ class Request : public Webserv {
 
   private:
     std::map<std::string, std::string> request;
+    std::map<std::string, std::string> session;
 
   public:
     METHOD method;
@@ -188,8 +190,14 @@ class Request : public Webserv {
     std::string httpV;
     ConfigFile config;
 
+    // * Default Contructor
+    Request();
+
     void setRequest(const std::string &req);
     const std::map<std::string, std::string> &getRequest() const;
+
+    void setSession(const std::string session_id, const std::string value);
+    const std::map<std::string, std::string> &getSession() const;
 };
 
 // ******************************************************************************
@@ -242,6 +250,8 @@ class Response : public Webserv {
     bool getIsRedirection() const;
     void setIsRedirection(bool value);
 
+    // void setSession(std::string session_id, std::string value);
+
     void setBodyFd(int &fd);
     int getBodyFd() const;
 
@@ -261,6 +271,7 @@ class Response : public Webserv {
                                         std::string &pathOfAutoIndex);
     bool isPathStartBySlash(const std::string &path);
     bool isFile(std::string path);
+    bool isUserInSession(const Request &req, std::string session_id);
     void generateResponse(Request &req);
     void methodNotAllowed(Request &req);
     void response(Request &req);

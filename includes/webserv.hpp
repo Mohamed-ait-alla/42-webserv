@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/12 17:03:51 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/13 10:23:23 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
+#include "Listener.hpp"
 #define PORT 8080
 #define IP INADDR_ANY
 #define IPv4 AF_INET
-#define BACK_LOG 4096
+// #define BACK_LOG 4096
 #define MAX_BUFFER_SIZE 4096
 #define MAX_EVENTS 1024
 
@@ -108,32 +109,33 @@ typedef struct s_clientState {
 
 class Server : public Webserv {
 	private:
-		int 				_sockfd;
+		// int 				_sockfd;
 		int 				_epollfd;
-		int 				_port;
-		std::string 		_host;
-		struct sockaddr_in	_serverAddr;
-		std::vector<int>	_serverSockets;
+		// int 				_port;
+		// std::string 		_host;
+		// struct sockaddr_in	_serverAddr;
+		// std::vector<int>	_serverSockets;
+		Listener			_listener;
 
 	public:
 		std::map<int, t_clientState> clients;
 
-		Server();
-		Server(std::string &host, int port);
+		// Server();
+		// Server(std::string &host, int port);
 		~Server();
 
-		int		getSockFd() const;
-		void	setSockFd(int fd);
-		void	setNonBlocking(int fd);
+		// int		getSockFd() const;
+		// void	setSockFd(int fd);
+		// void	setNonBlocking(int fd);
 		bool	isCompleteRequest(std::string &request);
 		size_t	getContentLength(std::string &request);
 		void	setUpNewConnection(int epfd, int serverFd, epoll_event &ev);
 		bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
 		bool	sendResponse(int epfd, int notifiedFd, Request &request);
-		void	initServerAddress();
-		void	createServerSocket();
-		void	bindServerSocket();
-		void	startListening();
+		// void	initServerAddress();
+		// void	createServerSocket();
+		// void	bindServerSocket();
+		// void	startListening();
 		void	createEpollInstance();
 		void	addServerToEpoll();
 		void	handleEpollEvents(int nfds, struct epoll_event *events, Request &req);

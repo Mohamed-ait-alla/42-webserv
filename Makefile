@@ -5,6 +5,7 @@ NAME = webserv
 SRCS = 	main.cpp \
 		./serverCore/Epoll.cpp \
 		./serverCore/Listener.cpp \
+		./serverCore/Client.cpp \
 		./serverCore/server.cpp \
 		./request/request.cpp \
 		./parse_config_file/parse_config_file.cpp \

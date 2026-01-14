@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/14 11:51:59 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/14 18:32:25 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,14 @@ Server::~Server()
 }
 
 
-bool Server::isCompleteRequest(std::string &request)
+bool Server::isCompleteRequest(const std::string &request)
 {
 	if (request.find("Content-Length:") != std::string::npos)
 		return (true);
 	return (false);
 }
 
-size_t Server::getContentLength(std::string &request)
+size_t Server::getContentLength(const std::string &request)
 {
 	size_t pos = request.find("Content-Length:");
 	if (pos == std::string::npos)
@@ -66,15 +66,9 @@ void Server::setUpNewConnection(int serverFd)
 		return;
 
 	_listener.setNonBlocking(clientFd);
-
 	_epoll.addFd(clientFd, EPOLLIN);
-	// ev.events = EPOLLIN;
-	// ev.data.fd = clientFd;
-	// if (epoll_ctl(epfd, EPOLL_CTL_ADD, clientFd, &ev) < 0)
-	// 	throwError("epoll_ctl(clientFd)"); // close fds if an error occurs
-	t_clientState clientState;
-	clientState.fd = clientFd;
-	clients[clientFd] = clientState;
+
+	clients[clientFd] = Client(clientFd);
 
 	std::cout << "\n✅ New connection accpeted (servfd: " << serverFd << " clientfd: " << clientFd << ")\n"
 			  << std::endl;
@@ -83,30 +77,34 @@ void Server::setUpNewConnection(int serverFd)
 bool Server::recvRequest(int notifiedFd)
 {
 	char buffer[MAX_BUFFER_SIZE];
-	size_t bytesRead;
+	ssize_t bytesRead;
 	bytesRead = recv(notifiedFd, buffer, MAX_BUFFER_SIZE - 1, 0);
-	if ((int)bytesRead <= 0)
+	if (bytesRead <= 0)
 	{
 		close(notifiedFd);
 		clients.erase(notifiedFd);
 		return (false);
 	}
-	clients[notifiedFd].request.append(buffer, bytesRead);
-	clients[notifiedFd].bytes_received += bytesRead;
-	size_t headerEnd = clients[notifiedFd].request.find("\r\n\r\n");
-	if (headerEnd == std::string::npos)
+	
+	Client&	client = clients[notifiedFd];
+	
+	client.appendRequest(buffer, bytesRead);
+	if (!client.hasCompleteHeaders())
 		return (false);
-
-	if (isCompleteRequest(clients[notifiedFd].request) && !clients[notifiedFd].isPostRequest)
+	if (isCompleteRequest(client.getRequest()))
 	{
-		clients[notifiedFd].content_length = getContentLength(clients[notifiedFd].request);
-		clients[notifiedFd].isPostRequest = true;
+		size_t contentLength = getContentLength(client.getRequest());
+		client.setContentLength(contentLength);
+		if (contentLength > 0)
+			client.setIsPostRequest(true);
 	}
-	if (clients[notifiedFd].isPostRequest && (clients[notifiedFd].content_length > clients[notifiedFd].request.length() - headerEnd - 4))
+
+	if (!client.hasCompleteBody())
 		return (false);
 
 	std::cout << "=== Request received ===\n";
-	std::cout << clients[notifiedFd].request << std::endl;
+	std::cout << client.getRequest() << std::endl;
+
 	_epoll.modFd(notifiedFd, EPOLLIN | EPOLLOUT);
 
 	return (true);
@@ -114,8 +112,9 @@ bool Server::recvRequest(int notifiedFd)
 
 bool Server::sendResponse(int notifiedFd, Request &request)
 {
-	
-	if (!clients[notifiedFd].isHeaderSent)
+	Client&	client = clients[notifiedFd];
+
+	if (!client.isHeaderSent())
 	{
 		Response res;
 
@@ -127,22 +126,21 @@ bool Server::sendResponse(int notifiedFd, Request &request)
 		bytesSent = send(notifiedFd, responseHeaders.c_str(), headersLength, 0);
 		if (bytesSent < 0)
 			throwError("send() when sending header part");
-		clients[notifiedFd].isHeaderSent = true;
-		clients[notifiedFd].bodyFd = res.getBodyFd();
+		client.setHeaderSent(true);
+		client.setBodyFd(res.getBodyFd());
 	}
-	if (clients[notifiedFd].isHeaderSent)
+	if (client.isHeaderSent())
 	{
 		char buffer[MAX_BUFFER_SIZE];
 		ssize_t bytesRead;
 		ssize_t bytesSent;
-		bytesRead = read(clients[notifiedFd].bodyFd, buffer, sizeof(buffer));
+		bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
 		if (bytesRead <= 0)
 		{
 			clients.erase(notifiedFd);
-			// epoll_ctl(_epoll.getEpollFd(), EPOLL_CTL_DEL, notifiedFd, NULL);
 			_epoll.delFd(notifiedFd);
 			close(notifiedFd);
-			close(clients[notifiedFd].bodyFd);
+			close(client.getBodyFd());
 			return (true);
 		}
 		bytesSent = send(notifiedFd, buffer, bytesRead, 0);
@@ -168,7 +166,7 @@ void Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
 	{
 		if (!recvRequest(fd))
 			return;
-		req.setRequest(clients[fd].request);
+		req.setRequest(clients[fd].getRequest());
 	}
 	else if (event.events & EPOLLOUT) // Write event => Send response
 	{

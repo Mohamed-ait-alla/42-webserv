@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/13 10:23:23 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/14 11:59:36 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <vector>
 #include "Listener.hpp"
+#include "Epoll.hpp"
 #define PORT 8080
 #define IP INADDR_ANY
 #define IPv4 AF_INET
@@ -82,26 +83,25 @@ class Webserv {
     void throwError(std::string func);
 };
 
-// ******************************************************************************
-// //
-//                                  Server Class //
-// ******************************************************************************
-// //
+// ****************************************************************************** //
+//                                  Server Class                                  //
+// ****************************************************************************** //
 
 class Request;
 
 typedef struct s_clientState {
-    int fd;
-    std::string request;
-    size_t bytes_received;
-    size_t content_length;
-    bool isPostRequest;
-    bool headers_complete;
-    bool request_complete;
-    bool isHeaderSent;
+    int			fd;
+	int			bodyFd;
+    std::string	request;
+    size_t		bytes_received;
+    size_t		content_length;
+    bool		isPostRequest;
+    bool		headers_complete;
+    bool		request_complete;
+    bool		isHeaderSent;
 
     s_clientState()
-        : fd(-1), bytes_received(0), content_length(0), isPostRequest(false),
+        : fd(-1), bodyFd(-1), bytes_received(0), content_length(0), isPostRequest(false),
           headers_complete(false), request_complete(false),
           isHeaderSent(false) {};
 
@@ -109,13 +109,9 @@ typedef struct s_clientState {
 
 class Server : public Webserv {
 	private:
-		// int 				_sockfd;
-		int 				_epollfd;
-		// int 				_port;
-		// std::string 		_host;
-		// struct sockaddr_in	_serverAddr;
-		// std::vector<int>	_serverSockets;
 		Listener			_listener;
+		Epoll				_epoll;
+		
 
 	public:
 		std::map<int, t_clientState> clients;
@@ -124,23 +120,13 @@ class Server : public Webserv {
 		// Server(std::string &host, int port);
 		~Server();
 
-		// int		getSockFd() const;
-		// void	setSockFd(int fd);
-		// void	setNonBlocking(int fd);
 		bool	isCompleteRequest(std::string &request);
 		size_t	getContentLength(std::string &request);
-		void	setUpNewConnection(int epfd, int serverFd, epoll_event &ev);
-		bool	recvRequest(int epfd, int notifiedFd, epoll_event ev);
-		bool	sendResponse(int epfd, int notifiedFd, Request &request);
-		// void	initServerAddress();
-		// void	createServerSocket();
-		// void	bindServerSocket();
-		// void	startListening();
-		void	createEpollInstance();
-		void	addServerToEpoll();
-		void	handleEpollEvents(int nfds, struct epoll_event *events, Request &req);
-		void	processClientEvent(struct epoll_event &event, Request &req);
-		void	processServerEvent(struct epoll_event &ev);
+		void	setUpNewConnection(int serverFd);
+		bool	recvRequest(int notifiedFd);
+		bool	sendResponse(int notifiedFd, Request &request);
+		void	processClientEvent(int fd, struct epoll_event &ev, Request &req);
+		void	processServerEvent(int fd);
 		void	run(Request &req);
 };
 

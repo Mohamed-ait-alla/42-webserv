@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/12 10:53:29 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/14 11:38:09 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,10 @@
 
 // * Default Constructor
 Response::Response()
+// todo: bodyfd i need to set him -1 here
 
     : status_code(OK), statusLine(""), contentType(""), contentLength(""),
-      headers(""), indexLocation(-1), isRedirection(false)
-// todo: bodyfd i need to set him -1 here
-// , bodyFd(-1)
+      headers(""), indexLocation(-1), isRedirection(false), bodyFd(-1)
 
 {
   this->setMimeTypes();

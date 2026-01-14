@@ -3,6 +3,7 @@ CXXFLAGS =  -Wall -Wextra -Werror -std=c++98
 NAME = webserv
 
 SRCS = 	main.cpp \
+		./serverCore/Epoll.cpp \
 		./serverCore/Listener.cpp \
 		./serverCore/server.cpp \
 		./request/request.cpp \

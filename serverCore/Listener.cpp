@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/12 17:53:32 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/13 10:17:25 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/14 12:00:46 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,13 @@ void	Listener::startListening()
 		throwError("listen()");
 	
 	_serverSockets.push_back(_sockfd);
+}
+
+bool	Listener::isListeningSocket(int fd)
+{
+	if (std::find(_serverSockets.begin(), _serverSockets.end(), fd) != _serverSockets.end())
+		return (true);
+	return (false);
 }
 
 void	Listener::setHost(std::string& host)

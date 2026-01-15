@@ -3,13 +3,15 @@ CXXFLAGS =  -Wall -Wextra -Werror -std=c++98
 NAME = webserv
 
 SRCS = 	main.cpp \
+		./serverCore/Helper.cpp \
+		./serverCore/ConnectionManager.cpp \
 		./serverCore/Epoll.cpp \
 		./serverCore/Listener.cpp \
 		./serverCore/Client.cpp \
 		./serverCore/server.cpp \
-		./request/request.cpp \
+		./request/Request.cpp \
 		./parse_config_file/parse_config_file.cpp \
-		./response/response.cpp \
+		./response/Response.cpp \
 		./response/initMimeTypes.cpp \
 		./webserv.cpp
 

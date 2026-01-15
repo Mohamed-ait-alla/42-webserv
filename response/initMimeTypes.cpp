@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   initMimeTypes.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 08:46:45 by mdahani           #+#    #+#             */
-/*   Updated: 2025/12/31 15:52:46 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/15 11:51:18 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/webserv.hpp"
+#include "../includes/Response.hpp"
 
 void Response::setMimeTypes() {
   // * text

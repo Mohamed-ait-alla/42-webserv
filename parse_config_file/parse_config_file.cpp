@@ -1,4 +1,4 @@
-#include "../includes/webserv.hpp"
+#include "../includes/Request.hpp"
 
 void ConfigFile::init_the_header_conf_default(){
     this->listen.push_back(8080);

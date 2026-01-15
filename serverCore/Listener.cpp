@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/12 17:53:32 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/14 12:00:46 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/15 07:29:40 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,17 +23,6 @@ Listener::~Listener()
 	{
 		close(_serverSockets[i]);
 	}
-}
-
-void Listener::setNonBlocking(int fd)
-{
-	int flags;
-
-	flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		throwError("fcntl(F_GETFL)");
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		throwError("fcntl(F_SETFL)");
 }
 
 void	Listener::initServerAddress()

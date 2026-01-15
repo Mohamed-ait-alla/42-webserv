@@ -6,18 +6,26 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 10:46:40 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/14 12:01:37 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/15 09:10:31 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Epoll.hpp"
 
-void	Epoll::createEpollInstance()
+Epoll::Epoll()
+	: _epollfd(-1)
 {
 	_epollfd = epoll_create(1024);
 	if (_epollfd < 0)
-		throw std::runtime_error("epoll_create() failed");
+		throw std::runtime_error("failed to create epoll instance");
 }
+
+Epoll::~Epoll()
+{
+	if (_epollfd >= 0)
+		close (_epollfd);
+}
+
 
 void	Epoll::addFd(int fd, uint32_t event)
 {

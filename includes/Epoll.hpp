@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 10:46:25 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/14 11:56:55 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/15 09:10:16 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,9 @@
 class Epoll {
 
 	public:
-		void	createEpollInstance();
+		Epoll();
+		~Epoll();
+
 		void	addFd(int fd, uint32_t event);
 		void	modFd(int fd, uint32_t event);
 		void	delFd(int fd);

@@ -6,17 +6,12 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/12 17:53:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/15 09:22:37 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/16 16:27:04 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <vector>
-#include <algorithm>
 #include "Helper.hpp"
 
 #define IPv4 AF_INET
@@ -34,7 +29,6 @@ class Listener : Helper {
 		void		createServerSocket();
 		void		bindServerSocket();
 		void		startListening();
-		// void		setNonBlocking(int fd);
 		bool		isListeningSocket(int fd);
 		std::string	getHost() const;
 		int			getSockFd() const;
@@ -52,4 +46,3 @@ class Listener : Helper {
 		int					_port;
 };
 
-// void		setNonBlocking(int fd);

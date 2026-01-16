@@ -6,9 +6,11 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:08 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/14 18:32:04 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/16 16:23:34 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#pragma once
 
 #include "Epoll.hpp"
 
@@ -39,7 +41,6 @@ class Client {
 		size_t		_bytesReceived;
 		size_t		_contentLength;
 		bool		_isPostRequest;
-		// bool		_headersComplete;
 		bool		_requestComplete;
 		bool		_isHeaderSent;
 		int			_clientFd;

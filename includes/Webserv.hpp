@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:48:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/15 12:06:14 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/16 16:28:29 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,11 +30,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 #define PORT 8080
 #define IP INADDR_ANY
 #define IPv4 AF_INET
 #define MAX_BUFFER_SIZE 4096
 #define MAX_EVENTS 1024
+
 
 // ****************************************************************************** //
 //                                 werbserv Class                                 //

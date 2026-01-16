@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/14 18:31:43 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/16 16:23:52 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,6 @@ Client::Client(int clientFd)
 	: _bytesReceived(0),
 	  _contentLength(0),
 	  _isPostRequest(false),
-	//   _headersComplete(false),
 	  _requestComplete(false),
 	  _isHeaderSent(false),
 	  _bodyFd(-1)

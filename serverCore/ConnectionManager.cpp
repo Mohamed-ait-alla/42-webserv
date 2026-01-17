@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/16 17:13:03 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/17 15:01:35 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,9 @@ void	ConnectionManager::setUpNewConnection(int serverFd, std::map<int, Client>& 
 		return ;
 	
 	setNonBlocking(clientFd);
-	std::cout << "in connectin: " << _epollInstance.getEpollFd() << std::endl;;
 	_epollInstance.addFd(clientFd, EPOLLIN);
-	
-	clients[clientFd] = Client(clientFd);
+
+	clients.insert(std::make_pair(clientFd, Client(clientFd)));
 
 	std::cout << "\n✅ New connection accpeted (servfd: " << serverFd << " clientfd: " << clientFd << ")\n" << std::endl;
 }
@@ -64,22 +63,21 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	bytesRead = recv(clientFd, buffer, MAX_BUFFER_SIZE - 1, 0);
 	if (bytesRead <= 0)
 	{
-		close(clientFd);
-		clients.erase(clientFd);
+		closeConnection(clientFd, clients);
 		return (false);
 	}
 
 	Client&	client = clients[clientFd];
 	
 	client.appendRequest(buffer, bytesRead);
+	client.updateLastActivity();
 	if (!client.hasCompleteHeaders())
 		return (false);
 	if (isCompleteRequest(client.getRequest()))
 	{
 		size_t contentLength = getContentLength(client.getRequest());
 		client.setContentLength(contentLength);
-		if (contentLength > 0)
-			client.setIsPostRequest(true);
+		client.setIsPostRequest(contentLength > 0);
 	}
 
 	if (!client.hasCompleteBody())
@@ -109,29 +107,45 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 			throwError("send() when sending header part");
 		client.setHeaderSent(true);
 		client.setBodyFd(res.getBodyFd());
+		client.updateLastActivity();
 	}
-	if (client.isHeaderSent())
+
+	char buffer[MAX_BUFFER_SIZE];
+	ssize_t bytesRead;
+	ssize_t bytesSent;
+
+	bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
+	if (bytesRead <= 0)
 	{
-		char buffer[MAX_BUFFER_SIZE];
-		ssize_t bytesRead;
-		ssize_t bytesSent;
-		bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
-		if (bytesRead <= 0)
-		{
-			clients.erase(clientFd);
-			_epollInstance.delFd(clientFd);
-			close(clientFd);
-			close(client.getBodyFd());
-			return (true);
-		}
-		bytesSent = send(clientFd, buffer, bytesRead, 0);
-		if (bytesSent < 0)
-		{
-			close(clientFd);
-			clients.erase(clientFd);
-			return (false);
-		}
-		std::memset(buffer, '\0', sizeof(buffer));
+		close(client.getBodyFd());
+		closeConnection(clientFd, clients);
+		return (true);
 	}
+
+	bytesSent = send(clientFd, buffer, bytesRead, 0);
+	if (bytesSent < 0)
+	{
+		close(clientFd);
+		clients.erase(clientFd);
+		return (false);
+	}
+
+	client.updateLastActivity();
 	return (false);
+}
+
+void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients)
+{
+	std::map<int, Client>::iterator it = clients.find(clientFd);
+	if (it == clients.end())
+		return;
+
+	_epollInstance.delFd(clientFd);
+	close(clientFd);
+
+	if (it->second.getIsTimedOut())
+		std::cout << "Server closed connection of client: "
+				  << clientFd << " because of timeout!" << std::endl;
+
+	clients.erase(it);
 }

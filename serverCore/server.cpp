@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/16 17:16:48 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/17 15:09:57 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,23 @@ Server::~Server()
 	}
 }
 
+void	Server::checkClientTimeOut()
+{
+	time_t	now = time(NULL);
+
+	for(std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); )
+	{
+		if (now - it->second.getLastActivity() > CLIENT_TIMEOUT)
+		{
+			int fd = it->first;
+			it->second.setTimedOut();
+			++it;
+			_connectionManager.closeConnection(fd, _clients);
+		}
+		else
+			++it;
+	}
+}
 
 bool	Server::receiveRequest(int clientFd)
 {
@@ -121,6 +138,7 @@ void	Server::run(Request &req)
 	while (running)
 	{
 		n_fds = _epoll.wait(events, MAX_EVENTS);
+
 		for (int i = 0; i < n_fds; i++)
 		{
 			int fd = events[i].data.fd;
@@ -130,5 +148,7 @@ void	Server::run(Request &req)
 			else
 				processClientEvent(fd, events[i], req);
 		}
+
+		checkClientTimeOut();
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:20 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/16 17:13:16 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/17 13:17:33 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class ConnectionManager : Helper {
 		size_t	getContentLength(const std::string &request);
 		bool	receiveData(int clientFd, std::map<int, Client>& clients);
 		bool	sendData(int clientFd, std::map<int, Client>& clients, Request& req);
+		void	closeConnection(int clientFd, std::map<int, Client>& clients);
 
 	private:
 		Epoll	_epollInstance;

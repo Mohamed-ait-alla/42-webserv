@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/16 17:20:20 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/17 13:44:48 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 #include "Response.hpp"
 #include "ConnectionManager.hpp"
-
 
 // ****************************************************************************** //
 //                                  Server Class                                  //
@@ -35,6 +34,8 @@ class Server : Helper {
 		ConnectionManager		_connectionManager;
 
 		// private helper methods
+		void	checkClientTimeOut();
+		
 		bool	receiveRequest(int clientFd);
 		bool	sendResponse(int clientFd, Request& req);
 		void	handleError(int clientFd);

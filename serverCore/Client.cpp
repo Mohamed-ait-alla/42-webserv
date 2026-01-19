@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/16 16:23:52 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/17 14:57:43 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,14 @@ Client::Client()
 Client::Client(int clientFd)
 	: _bytesReceived(0),
 	  _contentLength(0),
+	  _lastActivity(time(NULL)),
 	  _isPostRequest(false),
 	  _requestComplete(false),
 	  _isHeaderSent(false),
+	  _isTimedOut(false),
+	  _clientFd(clientFd),
 	  _bodyFd(-1)
 {
-	_clientFd = clientFd;
 }
 
 // member functions
@@ -57,6 +59,16 @@ void	Client::setBodyFd(int fd)
 	_bodyFd = fd;
 }
 
+void	Client::updateLastActivity()
+{
+	_lastActivity = time(NULL);
+}
+
+void	Client::setTimedOut()
+{
+	_isTimedOut = true;
+}
+
 // getters
 
 const std::string&	Client::getRequest() const
@@ -74,9 +86,23 @@ int	Client::getBodyFd() const
 	return (_bodyFd);
 }
 
+time_t	Client::getLastActivity() const
+{
+	return (_lastActivity);
+}
+
+int		Client::getClientFd() const
+{
+	return (_clientFd);
+}
+
+bool	Client::getIsTimedOut() const
+{
+	return (_isTimedOut);
+}
+
 void	Client::appendRequest(const std::string& data, size_t length)
 {
-
 	_request.append(data.c_str(), length);
 	_bytesReceived += length;
 }

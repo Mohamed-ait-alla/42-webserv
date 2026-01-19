@@ -1,19 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   request.cpp                                        :+:      :+:    :+:   */
+/*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/15 11:52:43 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/19 11:17:03 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Request.hpp"
 
 // * Default Constructor
-Request::Request() {
+Request::Request() : method(ELSE), path(""), httpV(""), isCGI(false) {
   // * generate a session_id for cookies
   srand(time(0));
   int sessionId = rand();
@@ -46,6 +46,12 @@ void Request::setRequest(const std::string &req) {
     }
 
     firstLine >> this->path >> this->httpV;
+
+    // ! check if request is CGI
+    this->checkCGI(this->path);
+    if (this->getIsCGI()) {
+      return; // ! if is CGI we don't need to build request just need path
+    }
   }
 
   // * get the headers
@@ -149,6 +155,10 @@ void Request::setRequest(const std::string &req) {
   if (!iFoundCookie) {
     this->request.erase("Cookie");
   }
+
+  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cout << this->isCGI << std::endl;
+  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 }
 
 const std::map<std::string, std::string> &Request::getRequest() const {
@@ -164,4 +174,47 @@ void Request::setSession(const std::string session_id,
 
 const std::map<std::string, std::string> &Request::getSession() const {
   return this->session;
+}
+
+void Request::checkCGI(std::string path) {
+  // * remove the first slash to check the file
+  if (path[0] == '/') {
+    path.erase(0, 1);
+  }
+
+  // * check the request is cgi
+  size_t pos = path.find("/");
+  if (pos == std::string::npos || path.substr(0, pos) != "cgi-bin") {
+    this->isCGI = false;
+    return;
+  }
+
+  // * check if file is in cgi-bin folder
+  if (access(path.c_str(), F_OK) == -1 || !this->pathGCIisFile(path)) {
+    this->isCGI = false;
+  } else if (access(path.c_str(), R_OK) == -1 ||
+             access(path.c_str(), W_OK) == -1) {
+    this->isCGI = false;
+  } else {
+    this->isCGI = true;
+  }
+}
+
+const bool &Request::getIsCGI() const { return this->isCGI; }
+
+// * check if a file
+bool Request::pathGCIisFile(std::string path) {
+  struct stat buffer;
+
+  // * get all status of path (size, type, ...)
+  if (stat(path.c_str(), &buffer) == -1) {
+    return false;
+  }
+
+  // * check the path is file or not
+  if (S_ISREG(buffer.st_mode)) {
+    return true;
+  }
+
+  return false;
 }

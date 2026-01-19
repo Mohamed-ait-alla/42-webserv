@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/15 11:48:37 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:50:41 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ class Request : public Webserv {
     METHOD method;
     std::string path;
     std::string httpV;
+    bool isCGI;
     ConfigFile config;
 
     // * Default Contructor
@@ -71,4 +72,9 @@ class Request : public Webserv {
 
     void setSession(const std::string session_id, const std::string value);
     const std::map<std::string, std::string> &getSession() const;
+    
+    void checkCGI(std::string path);
+    const bool &getIsCGI() const;
+
+    bool pathGCIisFile(std::string path);
 };

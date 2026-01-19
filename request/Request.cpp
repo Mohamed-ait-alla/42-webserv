@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/19 11:17:03 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/19 11:40:07 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,9 +191,6 @@ void Request::checkCGI(std::string path) {
 
   // * check if file is in cgi-bin folder
   if (access(path.c_str(), F_OK) == -1 || !this->pathGCIisFile(path)) {
-    this->isCGI = false;
-  } else if (access(path.c_str(), R_OK) == -1 ||
-             access(path.c_str(), W_OK) == -1) {
     this->isCGI = false;
   } else {
     this->isCGI = true;

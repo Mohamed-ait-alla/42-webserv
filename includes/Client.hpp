@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:08 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/17 14:56:12 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/21 16:27:25 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,16 @@ class Client {
 		int					getClientFd() const;
 		bool				getIsTimedOut() const;
 
+		// cgi methods
+		void				setCgiPipeEnd(int fd);
+		int					getCgiPipeEnd() const;
+		void				setCgiPid(pid_t pid);
+		pid_t				getCgiPid() const;
+		void				setCgiRunning(bool val);
+		bool				isCgiRunning() const;
+		void				appendCgiOutput(const std::string& data);
+		const std::string&	getCgiOutput() const;
+
 	private:
 		std::string	_request;
 		size_t		_bytesReceived;
@@ -53,5 +63,11 @@ class Client {
 		bool		_isTimedOut;
 		int			_clientFd;
 		int			_bodyFd;
+
+		// cgi state
+		int			_cgiPipeFd;
+		pid_t		_cgiPid;
+		bool		_isCgiRunning;
+		std::string	_cgiOutput;
 
 };

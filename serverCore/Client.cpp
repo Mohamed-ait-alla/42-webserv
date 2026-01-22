@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/17 14:57:43 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/21 16:27:38 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,10 @@ Client::Client(int clientFd)
 	  _isHeaderSent(false),
 	  _isTimedOut(false),
 	  _clientFd(clientFd),
-	  _bodyFd(-1)
+	  _bodyFd(-1),
+	  _cgiPipeFd(-1),
+	  _cgiPid(-1),
+	  _isCgiRunning(false)
 {
 }
 
@@ -69,6 +72,21 @@ void	Client::setTimedOut()
 	_isTimedOut = true;
 }
 
+void	Client::setCgiPipeEnd(int fd)
+{
+	_cgiPipeFd = fd;
+}
+
+void	Client::setCgiPid(pid_t pid)
+{
+	_cgiPid = pid;
+}
+
+void	Client::setCgiRunning(bool val)
+{
+	_isCgiRunning = val;
+}
+
 // getters
 
 const std::string&	Client::getRequest() const
@@ -99,6 +117,33 @@ int		Client::getClientFd() const
 bool	Client::getIsTimedOut() const
 {
 	return (_isTimedOut);
+}
+
+int	Client::getCgiPipeEnd() const
+{
+	return (_cgiPipeFd);
+}
+
+pid_t	Client::getCgiPid() const
+{
+	return (_cgiPid);
+}
+
+bool	Client::isCgiRunning() const
+{
+	return (_isCgiRunning);
+}
+
+const std::string& Client::getCgiOutput() const
+{
+	return (_cgiOutput);
+}
+
+
+
+void	Client::appendCgiOutput(const std::string& data)
+{
+	_cgiOutput += data;
 }
 
 void	Client::appendRequest(const std::string& data, size_t length)

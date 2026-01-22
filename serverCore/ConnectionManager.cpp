@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/17 15:01:35 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/22 18:26:53 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,47 +91,58 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 
 bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, Request& req)
 {
-	Client&	client = clients[clientFd];
-
-	if (!client.isHeaderSent())
+	if (req.getIsCGI())
 	{
-		Response res;
-
-		res.response(req);
-		std::string responseHeaders = res.getHeaders();
-		size_t headersLength = responseHeaders.length();
-		ssize_t bytesSent;
-
-		bytesSent = send(clientFd, responseHeaders.c_str(), headersLength, 0);
+		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
 		if (bytesSent < 0)
-			throwError("send() when sending header part");
-		client.setHeaderSent(true);
-		client.setBodyFd(res.getBodyFd());
-		client.updateLastActivity();
-	}
-
-	char buffer[MAX_BUFFER_SIZE];
-	ssize_t bytesRead;
-	ssize_t bytesSent;
-
-	bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
-	if (bytesRead <= 0)
-	{
-		close(client.getBodyFd());
+			throwError("send() when seding cgi response");
 		closeConnection(clientFd, clients);
 		return (true);
 	}
-
-	bytesSent = send(clientFd, buffer, bytesRead, 0);
-	if (bytesSent < 0)
+	else
 	{
-		close(clientFd);
-		clients.erase(clientFd);
+		Client&	client = clients[clientFd];
+	
+		if (!client.isHeaderSent())
+		{
+				Response res;
+		
+				res.response(req);
+				std::string responseHeaders = res.getHeaders();
+				size_t headersLength = responseHeaders.length();
+				ssize_t bytesSent;
+		
+				bytesSent = send(clientFd, responseHeaders.c_str(), headersLength, 0);
+				if (bytesSent < 0)
+					throwError("send() when sending header part");
+				client.setHeaderSent(true);
+				client.setBodyFd(res.getBodyFd());
+				client.updateLastActivity();
+		}
+	
+		char buffer[MAX_BUFFER_SIZE];
+		ssize_t bytesRead;
+		ssize_t bytesSent;
+	
+		bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
+		if (bytesRead <= 0)
+		{
+			close(client.getBodyFd());
+			closeConnection(clientFd, clients);
+			return (true);
+		}
+	
+		bytesSent = send(clientFd, buffer, bytesRead, 0);
+		if (bytesSent < 0)
+		{
+			close(clientFd);
+			clients.erase(clientFd);
+			return (false);
+		}
+	
+		client.updateLastActivity();
 		return (false);
 	}
-
-	client.updateLastActivity();
-	return (false);
 }
 
 void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients)

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/24 18:16:08 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/24 18:30:42 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ Request::Request() : method(ELSE), path(""), httpV(""), isCGI(false) {
 
 // * Default Constructor of struct CgiInfo
 Request::CgiInfo::CgiInfo()
+    // todo: all all attributes of struct
     : method(GET), scriptPath(""), pathInfo("")
       // , query("")
       ,

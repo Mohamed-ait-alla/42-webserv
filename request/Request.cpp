@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/19 11:40:07 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/24 18:16:08 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,20 @@ Request::Request() : method(ELSE), path(""), httpV(""), isCGI(false) {
   this->setSession("session_id", ss.str());
 }
 
+// * Default Constructor of struct CgiInfo
+Request::CgiInfo::CgiInfo()
+    : method(GET), scriptPath(""), pathInfo("")
+      // , query("")
+      ,
+      body(""), isChunked(false), contentLength(0) {}
+
 // * Setters & Getters
 void Request::setRequest(const std::string &req) {
+  // ! check if the request is not empty if not we need to clear the old data
+  if (!this->request.empty()) {
+    this->request.clear();
+  }
+
   bool iFoundCookie = false;
   std::stringstream ss(req);
 
@@ -49,9 +61,9 @@ void Request::setRequest(const std::string &req) {
 
     // ! check if request is CGI
     this->checkCGI(this->path);
-    if (this->getIsCGI()) {
-      return; // ! if is CGI we don't need to build request just need path
-    }
+    // if (this->getIsCGI()) {
+    //   return; // ! if is CGI we don't need to build request just need path
+    // }
   }
 
   // * get the headers
@@ -156,9 +168,75 @@ void Request::setRequest(const std::string &req) {
     this->request.erase("Cookie");
   }
 
-  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  if (this->getIsCGI()) {
+    // * copy method of request to cgi method
+    this->cgi.method = this->method;
+    // * copy headers of request to cgi headers
+    this->cgi.headers = this->request;
+    // * copy body of request to cgi body
+    this->cgi.body = this->request.count("post-body")
+                         ? this->request.find("post-body")->second
+                         : "";
+    // * check if is chunked
+    this->cgi.isChunked =
+        this->request.count("Transfer-Encoding") &&
+                this->request.find("Transfer-Encoding")->second == "chunked\r"
+            ? true
+            : false;
+    // * add Content Length
+    this->cgi.contentLength =
+        this->request.count("Content-Length")
+            ? std::strtol(this->request.find("Content-Length")->second.c_str(),
+                          NULL, 10)
+            : 0;
+    // * copy content type of request to cgi content type
+    this->cgi.contentType = this->request.count("Content-Type")
+                                ? this->request.find("Content-Type")->second
+                                : "";
+  }
+
+  std::cout << "=================is cgi===================\n";
   std::cout << this->isCGI << std::endl;
-  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================method===================\n";
+  std::cout << this->cgi.method << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================script path===================\n";
+  std::cout << this->cgi.scriptPath << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================path info===================\n";
+  std::cout << this->cgi.pathInfo << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================queries===================\n";
+  std::cout << this->cgi.queries << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================headers===================\n";
+  std::map<std::string, std::string>::iterator it = this->cgi.headers.begin();
+  for (; it != this->cgi.headers.end(); ++it) {
+    std::cout << it->first << ": " << it->second << std::endl;
+  }
+  std::cout << "===============================================\n";
+
+  std::cout << "=================body===================\n";
+  std::cout << this->cgi.body << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================isChunked===================\n";
+  std::cout << this->cgi.isChunked << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================contentLength===================\n";
+  std::cout << this->cgi.contentLength << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================contentType===================\n";
+  std::cout << this->cgi.contentType << std::endl;
+  std::cout << "===============================================\n";
 }
 
 const std::map<std::string, std::string> &Request::getRequest() const {
@@ -177,24 +255,51 @@ const std::map<std::string, std::string> &Request::getSession() const {
 }
 
 void Request::checkCGI(std::string path) {
-  // * remove the first slash to check the file
-  if (path[0] == '/') {
+  this->isCGI = false;
+
+  if (!path.empty() && path[0] == '/') {
     path.erase(0, 1);
   }
 
   // * check the request is cgi
   size_t pos = path.find("/");
   if (pos == std::string::npos || path.substr(0, pos) != "cgi-bin") {
+    return;
+  }
+
+  // * find script path and queries
+  size_t posPathInfo = path.find("/", pos + 1);
+  pos = path.find("?");
+
+  // * First, handle the script path
+  if (posPathInfo != std::string::npos) {
+    this->cgi.scriptPath = path.substr(0, posPathInfo);
+  } else if (pos != std::string::npos) {
+    this->cgi.scriptPath = path.substr(0, pos);
+  } else {
+    this->cgi.scriptPath = path;
+  }
+
+  // * Then, handle path info (only the path part before ?)
+  if (posPathInfo != std::string::npos) {
+    size_t endOfPathInfo = (pos != std::string::npos) ? pos : path.length();
+    this->cgi.pathInfo = path.substr(posPathInfo, endOfPathInfo - posPathInfo);
+  }
+
+  // * Finally, handle queries
+  if (pos != std::string::npos) {
+    // this->cgi.queries = this->parseQueries(path.substr(pos + 1));
+    this->cgi.queries = path.substr(pos + 1);
+  }
+
+  // * check if file is in cgi-bin folder
+  if (access(this->cgi.scriptPath.c_str(), F_OK) == -1 ||
+      !this->pathGCIisFile(this->cgi.scriptPath)) {
     this->isCGI = false;
     return;
   }
 
-  // * check if file is in cgi-bin folder
-  if (access(path.c_str(), F_OK) == -1 || !this->pathGCIisFile(path)) {
-    this->isCGI = false;
-  } else {
-    this->isCGI = true;
-  }
+  this->isCGI = true;
 }
 
 const bool &Request::getIsCGI() const { return this->isCGI; }
@@ -215,3 +320,27 @@ bool Request::pathGCIisFile(std::string path) {
 
   return false;
 }
+
+// // * Parse queries
+// std::map<std::string, std::string>
+// Request::parseQueries(const std::string &uri) {
+//   std::map<std::string, std::string> result;
+
+//   std::stringstream ss(uri);
+//   std::string line;
+
+//   while (std::getline(ss, line, '&')) {
+//     size_t pos = line.find("=");
+
+//     if (pos == std::string::npos) {
+//       continue;
+//     }
+
+//     std::string key = line.substr(0, pos);
+//     std::string value = line.substr(pos + 1);
+
+//     result[key] = value;
+//   }
+
+//   return result;
+// }

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/19 10:50:41 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/24 17:48:19 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,25 @@ class Request : public Webserv {
     bool isCGI;
     ConfigFile config;
 
+    // * CGI information
+    struct CgiInfo {
+      CgiInfo();
+      METHOD method;
+      std::string scriptPath;
+      std::string pathInfo;
+      // std::map<std::string,std::string> queries;
+      std::string queries;
+      std::map<std::string,std::string> headers;
+      std::string body;
+      bool isChunked;
+      size_t contentLength;
+      std::string contentType;
+    };
+
+    // * obj of cgi struct
+    CgiInfo cgi;
+
+
     // * Default Contructor
     Request();
 
@@ -77,4 +96,6 @@ class Request : public Webserv {
     const bool &getIsCGI() const;
 
     bool pathGCIisFile(std::string path);
+    
+    // std::map<std::string, std::string> parseQueries(const std::string &uri);
 };

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 17:34:37 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 18:29:40 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,8 +192,9 @@ void	Server::startCgiForClient(int clientFd, const Request& req)
 	
 	if (pipeFd < 0)
 	{
-		std::cout << "error occured during executing cgi script!" << std::endl;
-		_exit(190);
+		handleCgiError(clientFd, pipeFd);
+		_epoll.modFd(clientFd, EPOLLOUT);
+		return ;
 	} 
 	
 	client.setCgiPipeEnd(pipeFd);

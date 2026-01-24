@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/22 15:55:32 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 09:45:35 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,10 +35,22 @@ void	Server::checkClientTimeOut()
 
 	for(std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); )
 	{
-		if (now - it->second.getLastActivity() > CLIENT_TIMEOUT)
+		Client&	client = it->second;
+
+		if (client.isCgiRunning())
+		{
+			if (now - client.getCgiStartTime() > CGI_TIMEOUT)
+			{
+				std::cout << "----⏰ handle CGI timeOut ----\n";
+				client.setCgiTimedOut(true);
+				handleCgiError(client.getClientFd(), client.getCgiPipeEnd());
+			}
+		}
+
+		if (now - client.getLastActivity() > CLIENT_TIMEOUT)
 		{
 			int fd = it->first;
-			it->second.setTimedOut();
+			client.setTimedOut();
 			++it;
 			_connectionManager.closeConnection(fd, _clients);
 		}
@@ -87,6 +99,7 @@ bool	Server::isCgiPipeFd(int fd)
 void	Server::handleCgiError(int clientFd, int pipeFd)
 {
 	Client& client = _clients[clientFd];
+	Request& req = _clientRequests[clientFd];
 	
 	if (client.getCgiPid() > 0)
 	{
@@ -95,11 +108,29 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 	}
 	_epoll.delFd(pipeFd);
 	close(pipeFd);
-    Request& req = _clientRequests[clientFd];
     std::string errorResponse = "HTTP/1.1 500 Internal Server Error\r\n"
                                "Content-Type: text/plain\r\n"
-                               "Content-Length: 21\r\n\r\n"
+                               "Content-Length: 26\r\n\r\n"
                                "500 Internal Server Error\n";
+	if (client.isCgiTimedOut())
+	{
+		errorResponse = "HTTP/1.1 504 Gateway Timeout\r\n"
+						"Content-Type: text/html\r\n"
+						"Content-Length: 286\r\n"
+						"\r\n"
+						"<!doctype html>"
+						"<html lang='en'>"
+						"<head>"
+						"<title>504 Gateway Timeout</title>"
+						"</head>"
+						"<body>"
+						"<h1>Gateway timeout</h1>"
+						"<p>The server did not respond in time. Please try again later.</p>"
+						"<p>If this problem persists, please <a href='https://example.com/support'>contact support</a>.</p>"
+						"</body>"
+						"</html>";
+	}
+	
     req.setCgiResponse(errorResponse);
     
     // Switch to write mode
@@ -175,6 +206,7 @@ void	Server::startCgiForClient(int clientFd, const Request& req)
 	Client&	client = _clients[clientFd];
 
 	pid_t	pid;
+	client.setCgiStartTime(time(NULL));
 	int pipeFd = _cgiHandler.startCgiScript(req, pid);
 
 	std::cout << "pipeFd for clientFd: " << clientFd << " is : " << pipeFd << std::endl;

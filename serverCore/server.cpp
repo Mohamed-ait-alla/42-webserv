@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 16:41:26 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 17:34:37 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,7 +302,7 @@ std::string	Server::loadErrorPage(int statusCode)
 	else if (statusCode == 504)
 		path = "./pages/errors/504.html";
 	else
-		path = "./pages/default.html";
+		path = "./pages/503.html";
 
 	return (readFile(path));
 }
@@ -323,7 +323,7 @@ std::string Server::buildCgiResponse(int statusCode,
 	oss << "Connection: close\r\n";
 	oss << "\r\n";
 	oss << body;
-	
+
 	return (oss.str());
 }
 

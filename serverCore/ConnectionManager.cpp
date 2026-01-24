@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 15:31:23 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 18:08:48 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,10 +94,11 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 	if (req.getIsCGI())
 	{
 		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
-		if (bytesSent < 0)
-			throwError("send() when seding cgi response");
-		std::cout << "--- bytes sent : " <<bytesSent << " ---\n";
-		std::cout << req.getCgiResponse() << std::endl;
+		if (bytesSent <= 0)
+		{
+			closeConnection(clientFd, clients);
+			return (true);
+		}
 		closeConnection(clientFd, clients);
 		return (true);
 	}
@@ -115,8 +116,12 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 				ssize_t bytesSent;
 		
 				bytesSent = send(clientFd, responseHeaders.c_str(), headersLength, 0);
-				if (bytesSent < 0)
-					throwError("send() when sending header part");
+				if (bytesSent <= 0)
+				{
+					close(clientFd);
+					clients.erase(clientFd);
+					return (false);
+				}
 				client.setHeaderSent(true);
 				client.setBodyFd(res.getBodyFd());
 				client.updateLastActivity();
@@ -135,7 +140,7 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 		}
 	
 		bytesSent = send(clientFd, buffer, bytesRead, 0);
-		if (bytesSent < 0)
+		if (bytesSent <= 0)
 		{
 			close(clientFd);
 			clients.erase(clientFd);
@@ -161,4 +166,5 @@ void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& cli
 				  << clientFd << " because of timeout!" << std::endl;
 
 	clients.erase(it);
+	std::cout << "client: " << clientFd << " has been removed from clients map" << std::endl;
 }

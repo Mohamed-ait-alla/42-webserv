@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 07:06:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 11:55:49 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 16:12:47 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,4 +40,12 @@ std::string	Helper::readFile(const std::string& path)
 	ss << file.rdbuf();
 
 	return ss.str();
+}
+
+std::string	Helper::toString(size_t val)
+{
+	std::stringstream	ss;
+
+	ss << val;
+	return (ss.str());
 }

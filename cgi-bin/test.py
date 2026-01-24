@@ -13,12 +13,11 @@
 # print("</html>")
 
 #!/usr/bin/env python3
-# import time
+import time
 
-# time.sleep(10)
 
-print("Content-Type: text/plain\r\n")
-print("Content-Length: 19\r\n")
-print("\r\n")
+time.sleep(10)
+
+print("Content-Type: text/html\r\n")
+print("\r\n\r\n")
 print("<html><body>Too late</body></html>")
-

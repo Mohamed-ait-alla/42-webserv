@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 15:03:18 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 16:41:26 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,10 +112,11 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 		_epoll.delFd(pipeFd);
 		close(pipeFd);
 		
+		std::string	body = loadErrorPage(504);
+		
 		std::map<std::string, std::string> headers;
 		headers["Content-Type"] = "text/html";
-
-		std::string	body = loadErrorPage(504);
+		headers["Content-Length"] = toString(body.size());
 		
 		req.setCgiResponse(buildCgiResponse(504, "Gateway Timeout", headers, body));
 		
@@ -129,6 +130,7 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 
 		std::map<std::string, std::string> headers;
 		headers["Content-Type"] = "text/html";
+		headers["Content-Length"] = toString(body.size());
 
 		req.setCgiResponse(buildCgiResponse(500, "Internal Server Error", headers, body));	
 	}
@@ -277,9 +279,14 @@ CgiResult	Server::parseCgiOutput(const std::string& raw)
 	}
 	else
 		result.body = raw;
-	if (result.headers.find("Content-Type:") == result.headers.end())
+	if (result.headers.find("content-type") == result.headers.end())
 	{
 		 result.headers["Content-Type"] = "text/plain";
+	}
+	
+	if (result.headers.find("content-length") == result.headers.end())
+	{
+		result.headers["Content-Length"] = toString(result.body.size());
 	}
 
 	return (result);
@@ -313,7 +320,6 @@ std::string Server::buildCgiResponse(int statusCode,
 	{
 		oss << it->first << ": " << it->second << "\r\n";
 	}
-	oss << "Content-Length: " << body.size() << "\r\n";
 	oss << "Connection: close\r\n";
 	oss << "\r\n";
 	oss << body;

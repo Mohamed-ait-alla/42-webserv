@@ -3,7 +3,7 @@
 
 # method = os.environ.get('REQUEST_METHOD')  # "GET"
 
-# print("Content-Type: text/html")
+# print("Content-Te: text/html")
 # print()  # Blank line separates headers from body
 # print("<html>")
 # print("<body>")
@@ -13,10 +13,12 @@
 # print("</html>")
 
 #!/usr/bin/env python3
-import time
+# import time
 
-time.sleep(10)
+# time.sleep(10)
 
-print("Content-Type: text/html\r\n")
+print("Content-Type: text/plain\r\n")
+print("Content-Length: 19\r\n")
+print("\r\n")
 print("<html><body>Too late</body></html>")
 

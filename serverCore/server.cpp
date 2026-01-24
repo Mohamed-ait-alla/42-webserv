@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 09:45:35 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 15:03:18 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,105 +101,82 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 	Client& client = _clients[clientFd];
 	Request& req = _clientRequests[clientFd];
 	
-	if (client.getCgiPid() > 0)
-	{
-		kill(client.getCgiPid(), SIGKILL);
-		waitpid(client.getCgiPid(), NULL, 0);
-	}
-	_epoll.delFd(pipeFd);
-	close(pipeFd);
-    std::string errorResponse = "HTTP/1.1 500 Internal Server Error\r\n"
-                               "Content-Type: text/plain\r\n"
-                               "Content-Length: 26\r\n\r\n"
-                               "500 Internal Server Error\n";
+
 	if (client.isCgiTimedOut())
 	{
-		errorResponse = "HTTP/1.1 504 Gateway Timeout\r\n"
-						"Content-Type: text/html\r\n"
-						"Content-Length: 286\r\n"
-						"\r\n"
-						"<!doctype html>"
-						"<html lang='en'>"
-						"<head>"
-						"<title>504 Gateway Timeout</title>"
-						"</head>"
-						"<body>"
-						"<h1>Gateway timeout</h1>"
-						"<p>The server did not respond in time. Please try again later.</p>"
-						"<p>If this problem persists, please <a href='https://example.com/support'>contact support</a>.</p>"
-						"</body>"
-						"</html>";
+		if (client.getCgiPid() > 0)
+		{
+			kill(client.getCgiPid(), SIGKILL);
+			waitpid(client.getCgiPid(), NULL, 0);
+		}
+		_epoll.delFd(pipeFd);
+		close(pipeFd);
+		
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "text/html";
+
+		std::string	body = loadErrorPage(504);
+		
+		req.setCgiResponse(buildCgiResponse(504, "Gateway Timeout", headers, body));
+		
+		_epoll.modFd(clientFd, EPOLLOUT);
+		_cgiPipeToClient.erase(pipeFd);
+		client.setCgiRunning(false);
 	}
-	
-    req.setCgiResponse(errorResponse);
-    
-    // Switch to write mode
-    _epoll.modFd(clientFd, EPOLLOUT);
-    
-    // Cleanup
-    _cgiPipeToClient.erase(pipeFd);
-    client.setCgiRunning(false);
+	else
+	{
+		std::string body = loadErrorPage(500);
+
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "text/html";
+
+		req.setCgiResponse(buildCgiResponse(500, "Internal Server Error", headers, body));	
+	}
 }
 
-void	Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
+void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 {
 	if (_cgiPipeToClient.find(pipeFd) == _cgiPipeToClient.end())
-		return ;
-	
+		return;
+
 	int clientFd = _cgiPipeToClient[pipeFd];
-	Client&	client = _clients[clientFd];
+	Client& client = _clients[clientFd];
 
-	if (event.events & (EPOLLIN | EPOLLHUP | EPOLLERR) )
+	if (!(event.events & (EPOLLIN | EPOLLHUP | EPOLLERR)))
+		return;
+
+	char buffer[MAX_BUFFER_SIZE];
+	ssize_t bytesRead = _cgiHandler.readChunk(pipeFd, buffer, sizeof(buffer));
+
+	if (bytesRead > 0)
 	{
-		char buffer[MAX_BUFFER_SIZE];
-		
-		ssize_t bytesRead = _cgiHandler.readChunk(pipeFd, buffer, sizeof(buffer));
-		if (bytesRead > 0)
-		{
-			client.appendCgiOutput(std::string(buffer, bytesRead));
-            std::cout << "📥 Read " << bytesRead << " bytes from CGI for client " 
-                      << clientFd << std::endl;
-		}
-		else if (bytesRead == 0)
-		{
-            std::cout << "✅ CGI finished for client " << clientFd << std::endl;
-			_epoll.delFd(pipeFd);
-			close(pipeFd);
-
-			int exitStatus;
-			_cgiHandler.checkCgiStatus(client.getCgiPid(), exitStatus);
-			std::cout << "exit status is : => " << exitStatus << std::endl;
-			if (exitStatus != 0)
-			{
-				std::string	errorResponse = "HTTP/1.1 500 Internal Server Error\r\n"
-                               				"Content-Type: text/html\r\n"
-                               				"Content-Length: 26\r\n\r\n"
-                               				"500 Internal Server Error\n";
-				Request&	req = _clientRequests[clientFd];
-				req.setCgiResponse(errorResponse);
-				client.setCgiRunning(false);
-				_epoll.modFd(clientFd, EPOLLOUT);
-				_cgiPipeToClient.erase(pipeFd);
-				return ;
-			}
-			
-			std::string cgiOutput = client.getCgiOutput();
-			std::string response = buildCgiResponse(cgiOutput);
-			
-			Request& req = _clientRequests[clientFd];
-			req.setCgiResponse(response);
-
-			client.setCgiRunning(false);
-			_epoll.modFd(clientFd, EPOLLOUT);
-			_cgiPipeToClient.erase(pipeFd);
-		}
-		else
-		{
-            std::cerr << "❌ Error reading from CGI pipe\n";
-            handleCgiError(clientFd, pipeFd);
-		}
+		client.appendCgiOutput(std::string(buffer, bytesRead));
+		return;
 	}
+
+	// CGI finished or failed
+	_epoll.delFd(pipeFd);
+	close(pipeFd);
+
+	int exitStatus;
+	_cgiHandler.checkCgiStatus(client.getCgiPid(), exitStatus);
+
+	Request& req = _clientRequests[clientFd];
+
+	if (bytesRead < 0 || exitStatus != 0)
+		handleCgiError(clientFd, pipeFd);
+	else
+	{
+		CgiResult cgi = parseCgiOutput(client.getCgiOutput());
+
+		req.setCgiResponse(buildCgiResponse(200, "OK", cgi.headers, cgi.body));
+	}
+
+	client.setCgiRunning(false);
+	_epoll.modFd(clientFd, EPOLLOUT);
+	_cgiPipeToClient.erase(pipeFd);
 }
+
 
 void	Server::startCgiForClient(int clientFd, const Request& req)
 {
@@ -279,48 +256,69 @@ std::map<std::string, std::string> Server::parseCgiHeaders(const std::string& ra
     return headers;
 }
 
-
-std::string Server::buildCgiResponse(const std::string& cgiOutput)
+CgiResult	Server::parseCgiOutput(const std::string& raw)
 {
-    std::string response;
-    
-	size_t	headerEnd = cgiOutput.find("\r\n\r\n");
+	CgiResult	result;
+
+	size_t	headerEnd = raw.find("\r\n\r\n");
+	size_t	sepSize = 4;
 
 	if (headerEnd == std::string::npos)
-		headerEnd = cgiOutput.find("\n\n");
+	{
+		headerEnd = raw.find("\n\n");
+		sepSize = 2;
+	}
 
-	// std::string	cgiHeaders = cgiOutput.substr(0, headerEnd);
-	// std::string cgiBody = cgiOutput.substr(headerEnd + 4);
-	std::stringstream ss;
-	std::map<std::string, std::string>	headers;
-	std::string	body;
 	if (headerEnd != std::string::npos)
 	{
-		std::string headersStr = cgiOutput.substr(0, headerEnd);
-		headers = parseCgiHeaders(headersStr);
-		body = cgiOutput.substr(headerEnd + (cgiOutput[headerEnd] == '\r' ? 4 : 2));
+		std::string	headersStr = raw.substr(0, headerEnd);
+		result.headers = parseCgiHeaders(headersStr);
+		result.body = raw.substr(headerEnd + sepSize);
 	}
 	else
-		body = cgiOutput;
-	if (headers.find("content-type") == headers.end())
+		result.body = raw;
+	if (result.headers.find("Content-Type:") == result.headers.end())
 	{
-		headers["content-type"] = "text/plain";
+		 result.headers["Content-Type"] = "text/plain";
 	}
 
-	response = "HTTP/1.1 200 OK\r\n";
-	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
-	{
-		response += it->first + ": " + it->second + "\r\n";
-	}
-	ss << body.size();
-	if (headers.find("content-length") == headers.end())
-	{
-		response += "Content-Length: " + ss.str() + "\r\n";
-		response += "\r\n";
-	}
-	response += body;
+	return (result);
+}
 
-	return (response);
+
+std::string	Server::loadErrorPage(int statusCode)
+{
+	std::string	path;
+	
+	if (statusCode == 500)
+		path = "./pages/errors/500.html";
+	else if (statusCode == 504)
+		path = "./pages/errors/504.html";
+	else
+		path = "./pages/default.html";
+
+	return (readFile(path));
+}
+
+std::string Server::buildCgiResponse(int statusCode,
+										const std::string& reason,
+										const std::map<std::string, std::string>& headers,
+										const std::string& body)
+{
+	std::ostringstream oss;
+
+	oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
+
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+	{
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "Content-Length: " << body.size() << "\r\n";
+	oss << "Connection: close\r\n";
+	oss << "\r\n";
+	oss << body;
+	
+	return (oss.str());
 }
 
 void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)

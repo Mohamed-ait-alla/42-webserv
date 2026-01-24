@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 09:45:13 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 15:31:23 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,8 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
 		if (bytesSent < 0)
 			throwError("send() when seding cgi response");
+		std::cout << "--- bytes sent : " <<bytesSent << " ---\n";
+		std::cout << req.getCgiResponse() << std::endl;
 		closeConnection(clientFd, clients);
 		return (true);
 	}

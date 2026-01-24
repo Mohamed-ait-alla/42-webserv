@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 07:06:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/15 07:08:35 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 11:55:49 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,4 +27,17 @@ void	Helper::setNonBlocking(int fd)
 void	Helper::throwError(const std::string& sysCallFunc)
 {
 	 throw std::runtime_error(sysCallFunc + "failed: " + strerror(errno));
+}
+
+std::string	Helper::readFile(const std::string& path)
+{
+	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (!file.is_open())
+		throw std::runtime_error("Failed to open file: " + path);
+
+	std::ostringstream ss;
+	ss << file.rdbuf();
+
+	return ss.str();
 }

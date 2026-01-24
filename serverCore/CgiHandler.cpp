@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/21 18:55:26 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 09:43:26 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,51 @@ char**	CgiHandler::buildArguments(const Request& req)
 	argv[2] = NULL;
 
 	return (argv);
+}
+
+std::string	CgiHandler::getMethodName(int enumFlag)
+{
+	switch (enumFlag)
+	{
+	case 0:
+		return ("GET");
+		break;
+	case 1:
+		return ("POST");
+		break;
+	case 2:
+		return ("DELETE");
+		break;
+	
+	default:
+		return ("NOT ALLOWED METHOD");
+	}
+}
+
+char**	CgiHandler::buildEnvVariables(const Request& req)
+{
+	std::vector<std::string> envVect;
+
+	envVect.push_back("REQUEST_METHOD=" + getMethodName(req.method));
+	envVect.push_back("SCRIPT_NAME=" + req.path);
+	envVect.push_back("SERVER_PROTOCOL=HTTP/1.1");
+	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
+	envVect.push_back("SERVER_NAME=" + req.config.host);
+	envVect.push_back("SERVER_PORT=" + req.config.listen[0]); // note: make dynamic later
+
+	// check for query here
+	
+	// check for method if post get the headers
+
+	char**	envp = new char*[envVect.size() + 1];
+	for (size_t i = 0; i < envVect.size(); i++)
+	{
+		envp[i] = strdup(envVect[i].c_str());
+	}
+	envp[envVect.size()] = NULL;
+	
+	return (envp);
 }
 
 void	CgiHandler::executeScript(int pipeWriteEnd, char **argv, char **envp)
@@ -108,6 +153,7 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	setNonBlocking(pipeFds[0]);
 		
 	argv = buildArguments(req);
+	envp = buildEnvVariables(req);
 	
 	pid_t	pid = fork();
 	if (pid < 0)
@@ -125,7 +171,6 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	}
 
 	close(pipeFds[1]);
-
 	outPid = pid;
 	return (pipeFds[0]);
 }
@@ -150,14 +195,4 @@ bool	CgiHandler::checkCgiStatus(pid_t pid, int& exitStatus)
 ssize_t	CgiHandler::readChunk(int pipeFd, char *buffer, size_t size)
 {
 	return (read(pipeFd, buffer, size));
-}
-
-int	CgiHandler::getExitStatus() const
-{
-	return (_exitStatus);
-}
-
-std::string	CgiHandler::getCgiOutput() const
-{
-	return (_output);
 }

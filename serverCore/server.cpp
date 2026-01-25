@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 18:29:40 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/25 18:35:08 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void	Server::checkClientTimeOut()
 			int fd = it->first;
 			client.setTimedOut();
 			++it;
-			_connectionManager.closeConnection(fd, _clients);
+			_connectionManager.closeConnection(fd, _clients, _cgiPipeToClient);
 		}
 		else
 			++it;
@@ -61,14 +61,14 @@ void	Server::checkClientTimeOut()
 
 bool	Server::receiveRequest(int clientFd)
 {
-	if (!_connectionManager.receiveData(clientFd, _clients))
+	if (!_connectionManager.receiveData(clientFd, _clients, _cgiPipeToClient))
 		return (false);
 	return (true);
 }
 
 bool	Server::sendResponse(int clientFd, Request& req)
 {
-	if (!_connectionManager.sendData(clientFd, _clients, req))
+	if (!_connectionManager.sendData(clientFd, _clients, _cgiPipeToClient, req))
 		return (false);
 	return (true);
 }
@@ -187,8 +187,6 @@ void	Server::startCgiForClient(int clientFd, const Request& req)
 	pid_t	pid;
 	client.setCgiStartTime(time(NULL));
 	int pipeFd = _cgiHandler.startCgiScript(req, pid);
-
-	std::cout << "pipeFd for clientFd: " << clientFd << " is : " << pipeFd << std::endl;
 	
 	if (pipeFd < 0)
 	{

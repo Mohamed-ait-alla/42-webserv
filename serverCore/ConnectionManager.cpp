@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 18:08:48 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/25 18:33:51 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ size_t ConnectionManager::getContentLength(const std::string &request)
 }
 
 
-bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients)
+bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient)
 {
 	char buffer[MAX_BUFFER_SIZE];
 	ssize_t bytesRead;
@@ -63,7 +63,8 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	bytesRead = recv(clientFd, buffer, MAX_BUFFER_SIZE - 1, 0);
 	if (bytesRead <= 0)
 	{
-		closeConnection(clientFd, clients);
+		std::cout << "yes client closed it's connection hhhh\n";
+		closeConnection(clientFd, clients, cgiPipeToClient);
 		return (false);
 	}
 
@@ -89,17 +90,17 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	return (true);
 }
 
-bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, Request& req)
+bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient, Request& req)
 {
 	if (req.getIsCGI())
 	{
 		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
 		if (bytesSent <= 0)
 		{
-			closeConnection(clientFd, clients);
+			closeConnection(clientFd, clients, cgiPipeToClient);
 			return (true);
 		}
-		closeConnection(clientFd, clients);
+		closeConnection(clientFd, clients, cgiPipeToClient);
 		return (true);
 	}
 	else
@@ -135,7 +136,7 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 		if (bytesRead <= 0)
 		{
 			close(client.getBodyFd());
-			closeConnection(clientFd, clients);
+			closeConnection(clientFd, clients, cgiPipeToClient);
 			return (true);
 		}
 	
@@ -152,7 +153,7 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, R
 	}
 }
 
-void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients)
+void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient)
 {
 	std::map<int, Client>::iterator it = clients.find(clientFd);
 	if (it == clients.end())
@@ -164,6 +165,20 @@ void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& cli
 	if (it->second.getIsTimedOut())
 		std::cout << "Server closed connection of client: "
 				  << clientFd << " because of timeout!" << std::endl;
+
+	if (it->second.isCgiRunning())
+	{
+		pid_t	pid = it->second.getCgiPid();
+		int		pipeFd = it->second.getCgiPipeEnd();
+		if (pid > 0)
+		{
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+		}
+		_epollInstance.delFd(pipeFd);
+		close(pipeFd);
+		cgiPipeToClient.erase(pipeFd);
+	}
 
 	clients.erase(it);
 	std::cout << "client: " << clientFd << " has been removed from clients map" << std::endl;

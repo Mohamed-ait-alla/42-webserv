@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/26 13:44:16 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:51:46 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,7 @@ void Request::setRequest(const std::string &req) {
                                0, this->request.find("Host")->second.find(":"))
                          : "";
     // * copy listen of request to cgi listen
-    this->cgi.listen =
+    this->cgi.port =
         this->request.count("Host")
             ? request.find("Host")->second.substr(
                   this->request.find("Host")->second.find(":") + 1)
@@ -216,7 +216,7 @@ void Request::setRequest(const std::string &req) {
   std::cout << "===============================================\n";
 
   std::cout << "=================listen===================\n";
-  std::cout << this->cgi.listen << std::endl;
+  std::cout << this->cgi.port << std::endl;
   std::cout << "===============================================\n";
 
   std::cout << "=================method===================\n";

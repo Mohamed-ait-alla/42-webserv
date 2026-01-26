@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 13:32:20 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:51:56 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,8 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
 	envVect.push_back("PATH_INFO=" + req.cgi.pathInfo);
-	envVect.push_back("SERVER_NAME=" + req.config.host);
-	envVect.push_back("SERVER_PORT=" + req.config.listen[0]); // note: make dynamic later
+	envVect.push_back("SERVER_NAME=" + req.cgi.host);
+	envVect.push_back("SERVER_PORT=" + req.cgi.port); // note: make dynamic later
 
 	// check for query here
 	if (!req.cgi.query.empty())

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/26 11:42:01 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:15:29 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ void Request::setRequest(const std::string &req) {
   std::cout << "===============================================\n";
 
   std::cout << "=================queries===================\n";
-  std::cout << this->cgi.queries << std::endl;
+  std::cout << this->cgi.query << std::endl;
   std::cout << "===============================================\n";
 
   std::cout << "=================headers===================\n";
@@ -290,7 +290,7 @@ void Request::checkCGI(std::string path) {
   // * Finally, handle queries
   if (pos != std::string::npos) {
     // this->cgi.queries = this->parseQueries(path.substr(pos + 1));
-    this->cgi.queries = path.substr(pos + 1);
+    this->cgi.query = path.substr(pos + 1);
   }
 
   // * check if file is in cgi-bin folder

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 11:40:57 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:15:02 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ class Request : public Webserv {
       std::string scriptPath;
       std::string pathInfo;
       // std::map<std::string,std::string> queries;
-      std::string queries;
+      std::string query;
       std::map<std::string,std::string> headers;
       std::string body;
       bool isChunked;

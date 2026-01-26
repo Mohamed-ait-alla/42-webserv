@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 09:43:26 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:32:20 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 char**	CgiHandler::buildArguments(const Request& req)
 {
 	char**	argv = new char*[3];
-	std::string path = "." + req.path;
+	std::string path = "./" + req.cgi.scriptPath;
 
 	argv[0] = strdup(req.config.cgi_path[0].c_str());
 	argv[1] = strdup(path.c_str());
@@ -49,16 +49,19 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 {
 	std::vector<std::string> envVect;
 
-	envVect.push_back("REQUEST_METHOD=" + getMethodName(req.method));
-	envVect.push_back("SCRIPT_NAME=" + req.path);
+	envVect.push_back("REQUEST_METHOD=" + getMethodName(req.cgi.method));
+	envVect.push_back("SCRIPT_NAME=" + req.cgi.scriptPath);
 	envVect.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
+	envVect.push_back("PATH_INFO=" + req.cgi.pathInfo);
 	envVect.push_back("SERVER_NAME=" + req.config.host);
 	envVect.push_back("SERVER_PORT=" + req.config.listen[0]); // note: make dynamic later
 
 	// check for query here
-	
+	if (!req.cgi.query.empty())
+		envVect.push_back("QUERY_STRING=" + req.cgi.query);
+
 	// check for method if post get the headers
 
 	char**	envp = new char*[envVect.size() + 1];

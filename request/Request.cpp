@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/24 18:30:42 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/26 13:32:02 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,6 +170,17 @@ void Request::setRequest(const std::string &req) {
   }
 
   if (this->getIsCGI()) {
+    // * copy host of request to cgi host
+    this->cgi.host = this->request.count("Host")
+                         ? request.find("Host")->second.substr(
+                               0, this->request.find("Host")->second.find(":"))
+                         : "";
+    // * copy listen of request to cgi listen
+    this->cgi.listen =
+        this->request.count("Host")
+            ? request.find("Host")->second.substr(
+                  this->request.find("Host")->second.find(":") + 1)
+            : "";
     // * copy method of request to cgi method
     this->cgi.method = this->method;
     // * copy headers of request to cgi headers
@@ -198,6 +209,14 @@ void Request::setRequest(const std::string &req) {
 
   std::cout << "=================is cgi===================\n";
   std::cout << this->isCGI << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================host===================\n";
+  std::cout << this->cgi.host << std::endl;
+  std::cout << "===============================================\n";
+
+  std::cout << "=================listen===================\n";
+  std::cout << this->cgi.listen << std::endl;
   std::cout << "===============================================\n";
 
   std::cout << "=================method===================\n";

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 11:50:03 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 11:28:36 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,6 @@
 
 #include "Response.hpp"
 #include "CgiHandler.hpp"
-
-
-struct CgiResult {
-    std::map<std::string, std::string> headers;
-    std::string body;
-};
 
 
 // ****************************************************************************** //
@@ -60,12 +54,4 @@ class Server : Helper {
 		void	handleCgiOutput(int pipeFd, struct epoll_event& event);
 		void	handleCgiError(int clientFd, int pipeFd);
 		bool	isCgiPipeFd(int fd);
-		std::string	buildCgiResponse(int statusCode,
-									  const std::string& reason,
-									  const std::map<std::string, std::string>& headers,
-									  const std::string& cgiOutput);
-		std::string ft_trim(const std::string& str);
-		std::map<std::string, std::string>	parseCgiHeaders(const std::string& rawHeaders);
-		CgiResult	parseCgiOutput(const std::string& raw);
-		std::string	loadErrorPage(int statusCode);
 };

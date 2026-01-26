@@ -10,6 +10,7 @@ SRCS = 	main.cpp \
 		./serverCore/Client.cpp \
 		./serverCore/server.cpp \
 		./serverCore/CgiHandler.cpp \
+		./serverCore/CgiUtils.cpp \
 		./request/Request.cpp \
 		./parse_config_file/parse_config_file.cpp \
 		./response/Response.cpp \

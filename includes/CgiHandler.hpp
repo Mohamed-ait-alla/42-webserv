@@ -6,13 +6,13 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:43:47 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 09:42:57 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 11:04:03 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include "ConnectionManager.hpp"
+#include "CgiUtils.hpp"
 
 #define CGI_TIMEOUT 5
 

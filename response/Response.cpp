@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/15 11:51:37 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 18:32:54 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // * Default Constructor
 Response::Response()
-// todo: bodyfd i need to set him -1 here
+    // todo: bodyfd i need to set him -1 here
 
     : status_code(OK), statusLine(""), contentType(""), contentLength(""),
       headers(""), indexLocation(-1), isRedirection(false), bodyFd(-1)
@@ -165,10 +165,9 @@ void Response::GET_METHOD(Request &req) {
   // * set status code as default
   this->setStatusCode(OK);
 
-  // * check roles if location is in config file
+  // * check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      // todo: check return in config file
       // * redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
         // * Generate response (only headers)
@@ -201,7 +200,6 @@ void Response::GET_METHOD(Request &req) {
             this->setStatusCode(FORBIDDEN);
             req.path = req.config.error_page[FORBIDDEN];
           } else {
-            // todo: 3lach makidlholch hnaaaa
             std::string pathOfAutoIndex =
                 req.config.locations[this->getIndexLocation()].root +
                 req.config.locations[this->getIndexLocation()].path;
@@ -216,7 +214,6 @@ void Response::GET_METHOD(Request &req) {
         else if (!req.config.locations[this->getIndexLocation()].autoindex &&
                  req.config.locations[this->getIndexLocation()].index.empty() &&
                  !isFile) {
-          // todo: 3lach makidlholch hnaaaa
           std::cout << "################page is forbidden################\n";
           this->setStatusCode(FORBIDDEN);
           req.path = req.config.error_page[FORBIDDEN];
@@ -244,18 +241,11 @@ void Response::GET_METHOD(Request &req) {
     }
   }
 
-  // std::cout << "===============> req.config.root: " << req.config.root
-  //           << std::endl;
-  // std::cout << "===============> req.path: " << req.path << std::endl;
-
   std::cout << "===============> req.path: " << req.path << std::endl;
   if (req.path == "/") {
     req.path = req.config.index;
   }
 
-  // else {
-  //   req.path.erase(0, 1); // * remove / in fisrt request path
-  // }
   std::cout << "===============> req.config.root: " << req.config.root
             << std::endl;
 
@@ -290,11 +280,9 @@ void Response::GET_METHOD(Request &req) {
 
 // * POST METHOD
 void Response::POST_METHOD(Request &req) {
-  // todo: edit this to post method
-  // * check roles if location is in config file
+  // * check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      // todo: check return in config file
       // * redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
         // * Generate response (only headers)
@@ -358,14 +346,12 @@ void Response::POST_METHOD(Request &req) {
                                  : "";
     // * check if the file is empty
     if (uploadBody.empty()) {
-      // todo: i think i should make this path flexible (get from config file)
       this->setStatusCode(FORBIDDEN);
       req.path = req.config.error_page[FORBIDDEN];
     } else if (uploadBody.length() / 1e6 >
                req.config
                    .client_max_body_size) { // * check file size by config file
                                             // * convert from bytes to MB
-      // todo: i think i should make this path flexible (get from config file)
       this->setStatusCode(PAYLOAD_TOO_LARGE);
       req.path = req.config.error_page[PAYLOAD_TOO_LARGE];
     } else {
@@ -383,7 +369,6 @@ void Response::POST_METHOD(Request &req) {
       std::ifstream uploadDir(fullPath.c_str());
       if (!uploadDir.is_open()) {
         this->setStatusCode(FORBIDDEN);
-        // todo: i think i should make this path flexible (get from config file)
         req.path = req.config.error_page[FORBIDDEN];
       } else {
         fullPath.append(filename);
@@ -403,7 +388,6 @@ void Response::POST_METHOD(Request &req) {
         uploadDir.close();
         outputFile.close();
 
-        // todo: i think i should make this path flexible (get from config file)
         // * status code
         this->setStatusCode(CREATED);
 
@@ -450,7 +434,6 @@ void Response::POST_METHOD(Request &req) {
       }
     }
   } else {
-    // todo: status code for forbidden request and add a page
     this->setStatusCode(FORBIDDEN);
     req.path = req.config.error_page[FORBIDDEN];
   }
@@ -462,7 +445,7 @@ void Response::POST_METHOD(Request &req) {
 // * DELETE METHOD
 void Response::DELETE_METHOD(Request &req) {
 
-  // * check roles if location is in config file
+  // * check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
       std::cout << "==========================================================="
@@ -663,7 +646,7 @@ void Response::addDataToBody(const Request &req) {
       "</body>\n"
       "</html>\n";
 
-  // todo: get the root path
+  // * get the root path from config file
   std::string fullPath(req.config.root);
 
   fullPath.append("/post-request-data.html");
@@ -763,11 +746,13 @@ bool Response::checkAllowMethodsOfLocation(
     return true;
   }
 
-  for (size_t i = 0; i < allowMethods.size(); i++) {
-    if (allowMethods[i] == method) {
-      return true;
-    }
+  // * check if method is allowed;
+  std::vector<std::string>::iterator it =
+      std::find(allowMethods.begin(), allowMethods.end(), method);
+  if (it != allowMethods.end()) {
+    return true;
   }
+
   return false;
 }
 
@@ -904,7 +889,7 @@ std::string Response::generatePageOfAutoIndex(Request &req,
 
 // * is start by slash
 bool Response::isPathStartBySlash(const std::string &path) {
-  if (path[0] == '/') {
+  if (!path.empty() && path[0] == '/') {
     return true;
   }
   return false;
@@ -961,16 +946,11 @@ void Response::generateResponse(Request &req) {
   std::string fullPath;
 
   // * root directory
-  // todo: check if we have the folder
   std::ifstream rootPath(req.config.root.c_str());
   if (!rootPath.is_open()) {
     this->setStatusCode(NOT_FOUND);
-    // todo: get page from confige file
     fullPath = "pages/errors/404.html";
   } else {
-    // if (req.method == POST && this->getStatusCode() == CREATED) {
-    //   fullPath = req.path;
-    // } else {
     // * handle slash after root path
     // * we add slash only in path /
     if (!this->isPathStartBySlash(req.path)) {
@@ -982,7 +962,6 @@ void Response::generateResponse(Request &req) {
 
     // * add path to root directory
     fullPath.append(req.path);
-    // }
   }
 
   std::cout << "fullPath=====================> " << fullPath << std::endl;
@@ -996,7 +975,6 @@ void Response::generateResponse(Request &req) {
     // * check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
-      // todo: get error from config file
       fullPath = "pages/errors/404.html";
     }
   } else if (access(fullPath.c_str(), R_OK) == -1 ||
@@ -1006,7 +984,6 @@ void Response::generateResponse(Request &req) {
     // * check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
-      // todo: get error from config file
       fullPath = "pages/errors/403.html";
     }
   }

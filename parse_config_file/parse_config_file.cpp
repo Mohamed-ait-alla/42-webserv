@@ -4,7 +4,7 @@ void ConfigFile::init_the_header_conf_default(){
     this->listen.push_back(8080);
     this->server_name = "webserv/1.0";
     this->host = "127.0.0.1";
-    this->root = "pages";
+    this->root = "www";
     this->client_max_body_size = 1024;
     this->index = "index.html";
     this->error_page[403] = "errors/403.html";
@@ -12,6 +12,8 @@ void ConfigFile::init_the_header_conf_default(){
     this->error_page[405] = "errors/405.html";
     this->error_page[413] = "errors/413.html";
     this->error_page[500] = "errors/500.html";
+    this->error_page[503] = "errors/503.html";
+    this->error_page[504] = "errors/504.html";
 }
 
 

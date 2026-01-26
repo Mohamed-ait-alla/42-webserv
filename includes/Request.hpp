@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 13:15:02 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 13:44:05 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,9 @@ class Request : public Webserv {
     // * CGI information
     struct CgiInfo {
       CgiInfo();
+  
+      std::string host;
+      std::string listen;
       METHOD method;
       std::string scriptPath;
       std::string pathInfo;

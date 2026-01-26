@@ -5,12 +5,13 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/18 13:05:03 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/17 15:09:57 by mait-all         ###   ########.fr       */
+/*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
+/*   Updated: 2026/01/26 11:31:31 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
+#include <cstring>
 
 // Default constructor
 Server::Server()
@@ -34,12 +35,24 @@ void	Server::checkClientTimeOut()
 
 	for(std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); )
 	{
-		if (now - it->second.getLastActivity() > CLIENT_TIMEOUT)
+		Client&	client = it->second;
+
+		if (client.isCgiRunning())
+		{
+			if (now - client.getCgiStartTime() > CGI_TIMEOUT)
+			{
+				std::cout << "----⏰ handle CGI timeOut ----\n";
+				client.setCgiTimedOut(true);
+				handleCgiError(client.getClientFd(), client.getCgiPipeEnd());
+			}
+		}
+
+		if (now - client.getLastActivity() > CLIENT_TIMEOUT)
 		{
 			int fd = it->first;
-			it->second.setTimedOut();
+			client.setTimedOut();
 			++it;
-			_connectionManager.closeConnection(fd, _clients);
+			_connectionManager.closeConnection(fd, _clients, _cgiPipeToClient);
 		}
 		else
 			++it;
@@ -48,14 +61,14 @@ void	Server::checkClientTimeOut()
 
 bool	Server::receiveRequest(int clientFd)
 {
-	if (!_connectionManager.receiveData(clientFd, _clients))
+	if (!_connectionManager.receiveData(clientFd, _clients, _cgiPipeToClient))
 		return (false);
 	return (true);
 }
 
 bool	Server::sendResponse(int clientFd, Request& req)
 {
-	if (!_connectionManager.sendData(clientFd, _clients, req))
+	if (!_connectionManager.sendData(clientFd, _clients, _cgiPipeToClient, req))
 		return (false);
 	return (true);
 }
@@ -78,19 +91,146 @@ void	Server::processServerEvent(int fd)
 	_connectionManager.setUpNewConnection(fd, _clients);
 }
 
-void Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
+bool	Server::isCgiPipeFd(int fd)
 {
+	return (_cgiPipeToClient.find(fd) != _cgiPipeToClient.end());
+}
+
+void	Server::handleCgiError(int clientFd, int pipeFd)
+{
+	Client& client = _clients[clientFd];
+	Request& req = _clientRequests[clientFd];
+	
+
+	if (client.isCgiTimedOut())
+	{
+		if (client.getCgiPid() > 0)
+		{
+			kill(client.getCgiPid(), SIGKILL);
+			waitpid(client.getCgiPid(), NULL, 0);
+		}
+		_epoll.delFd(pipeFd);
+		close(pipeFd);
+		
+		std::string	body = loadErrorPage(504);
+		
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "text/html";
+		headers["Content-Length"] = toString(body.size());
+		
+		req.setCgiResponse(buildCgiResponse(504, "Gateway Timeout", headers, body));
+		
+		_epoll.modFd(clientFd, EPOLLOUT);
+		_cgiPipeToClient.erase(pipeFd);
+		client.setCgiRunning(false);
+	}
+	else
+	{
+		std::string body = loadErrorPage(500);
+
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "text/html";
+		headers["Content-Length"] = toString(body.size());
+
+		req.setCgiResponse(buildCgiResponse(500, "Internal Server Error", headers, body));	
+	}
+}
+
+void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
+{
+	if (_cgiPipeToClient.find(pipeFd) == _cgiPipeToClient.end())
+		return;
+
+	int clientFd = _cgiPipeToClient[pipeFd];
+	Client& client = _clients[clientFd];
+
+	if (!(event.events & (EPOLLIN | EPOLLHUP | EPOLLERR)))
+		return;
+
+	char buffer[MAX_BUFFER_SIZE];
+	ssize_t bytesRead = _cgiHandler.readChunk(pipeFd, buffer, sizeof(buffer));
+
+	if (bytesRead > 0)
+	{
+		client.appendCgiOutput(std::string(buffer, bytesRead));
+		return;
+	}
+
+	// CGI finished or failed
+	_epoll.delFd(pipeFd);
+	close(pipeFd);
+
+	int exitStatus;
+	_cgiHandler.checkCgiStatus(client.getCgiPid(), exitStatus);
+
+	Request& req = _clientRequests[clientFd];
+
+	if (bytesRead < 0 || exitStatus != 0)
+		handleCgiError(clientFd, pipeFd);
+	else
+	{
+		CgiResult cgi = parseCgiOutput(client.getCgiOutput());
+
+		req.setCgiResponse(buildCgiResponse(200, "OK", cgi.headers, cgi.body));
+	}
+
+	client.setCgiRunning(false);
+	_epoll.modFd(clientFd, EPOLLOUT);
+	_cgiPipeToClient.erase(pipeFd);
+}
+
+
+void	Server::startCgiForClient(int clientFd, const Request& req)
+{
+	Client&	client = _clients[clientFd];
+
+	pid_t	pid;
+	client.setCgiStartTime(time(NULL));
+	int pipeFd = _cgiHandler.startCgiScript(req, pid);
+	
+	if (pipeFd < 0)
+	{
+		handleCgiError(clientFd, pipeFd);
+		_epoll.modFd(clientFd, EPOLLOUT);
+		return ;
+	} 
+	
+	client.setCgiPipeEnd(pipeFd);
+	client.setCgiPid(pid);
+	client.setCgiRunning(true);
+
+	_epoll.addFd(pipeFd, EPOLLIN);
+
+	_cgiPipeToClient[pipeFd] = clientFd;
+
+
+    std::cout << "✅ CGI started for client " << clientFd 
+              << " (pipe fd: " << pipeFd << ", pid: " << pid << ")\n";
+}
+
+void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
+{
+	if (isCgiPipeFd(fd))
+	{
+		handleCgiOutput(fd, event);
+		return ;
+	}
 	if (event.events & EPOLLIN) // Read event => Request received
 	{
 		if (receiveRequest(fd))
 		{
-			_epoll.modFd(fd, EPOLLIN | EPOLLOUT);
 			req.setRequest(_clients[fd].getRequest());
+			_clientRequests[fd] = req;
+			if (req.getIsCGI())
+				startCgiForClient(fd, req);
+			else
+				_epoll.modFd(fd, EPOLLOUT);
 		}
 	}
 	else if (event.events & EPOLLOUT) // Write event => Send response
 	{
-		if (!sendResponse(fd, req))
+		Request& request = _clientRequests[fd];
+		if (!sendResponse(fd, request))
 			return;
 	}
 	else // Error event => EPOLLERR
@@ -99,7 +239,6 @@ void Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
 		return;
 	}
 }
-
 
 void	Server::run(Request &req)
 {

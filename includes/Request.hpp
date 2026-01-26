@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 13:16:22 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/26 13:34:47 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ class Request : public Webserv {
   private:
     std::map<std::string, std::string> request;
     std::map<std::string, std::string> session;
+	std::string	_cgiResponse;
 
   public:
     METHOD method;
@@ -99,6 +100,6 @@ class Request : public Webserv {
     const bool &getIsCGI() const;
 
     bool pathGCIisFile(std::string path);
-    
-    // std::map<std::string, std::string> parseQueries(const std::string &uri);
+	void	setCgiResponse(const std::string& cgiResponse);
+	const std::string& getCgiResponse() const;
 };

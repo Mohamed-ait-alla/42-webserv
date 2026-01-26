@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/17 15:01:35 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/25 18:46:04 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ size_t ConnectionManager::getContentLength(const std::string &request)
 }
 
 
-bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients)
+bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient)
 {
 	char buffer[MAX_BUFFER_SIZE];
 	ssize_t bytesRead;
@@ -63,7 +63,7 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	bytesRead = recv(clientFd, buffer, MAX_BUFFER_SIZE - 1, 0);
 	if (bytesRead <= 0)
 	{
-		closeConnection(clientFd, clients);
+		closeConnection(clientFd, clients, cgiPipeToClient);
 		return (false);
 	}
 
@@ -89,52 +89,70 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	return (true);
 }
 
-bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, Request& req)
+bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient, Request& req)
 {
-	Client&	client = clients[clientFd];
-
-	if (!client.isHeaderSent())
+	if (req.getIsCGI())
 	{
-		Response res;
-
-		res.response(req);
-		std::string responseHeaders = res.getHeaders();
-		size_t headersLength = responseHeaders.length();
-		ssize_t bytesSent;
-
-		bytesSent = send(clientFd, responseHeaders.c_str(), headersLength, 0);
-		if (bytesSent < 0)
-			throwError("send() when sending header part");
-		client.setHeaderSent(true);
-		client.setBodyFd(res.getBodyFd());
-		client.updateLastActivity();
-	}
-
-	char buffer[MAX_BUFFER_SIZE];
-	ssize_t bytesRead;
-	ssize_t bytesSent;
-
-	bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
-	if (bytesRead <= 0)
-	{
-		close(client.getBodyFd());
-		closeConnection(clientFd, clients);
+		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
+		if (bytesSent <= 0)
+		{
+			closeConnection(clientFd, clients, cgiPipeToClient);
+			return (true);
+		}
+		closeConnection(clientFd, clients, cgiPipeToClient);
 		return (true);
 	}
-
-	bytesSent = send(clientFd, buffer, bytesRead, 0);
-	if (bytesSent < 0)
+	else
 	{
-		close(clientFd);
-		clients.erase(clientFd);
+		Client&	client = clients[clientFd];
+	
+		if (!client.isHeaderSent())
+		{
+				Response res;
+		
+				res.response(req);
+				std::string responseHeaders = res.getHeaders();
+				size_t headersLength = responseHeaders.length();
+				ssize_t bytesSent;
+		
+				bytesSent = send(clientFd, responseHeaders.c_str(), headersLength, 0);
+				if (bytesSent <= 0)
+				{
+					close(clientFd);
+					clients.erase(clientFd);
+					return (false);
+				}
+				client.setHeaderSent(true);
+				client.setBodyFd(res.getBodyFd());
+				client.updateLastActivity();
+		}
+	
+		char buffer[MAX_BUFFER_SIZE];
+		ssize_t bytesRead;
+		ssize_t bytesSent;
+	
+		bytesRead = read(client.getBodyFd(), buffer, sizeof(buffer));
+		if (bytesRead <= 0)
+		{
+			close(client.getBodyFd());
+			closeConnection(clientFd, clients, cgiPipeToClient);
+			return (true);
+		}
+	
+		bytesSent = send(clientFd, buffer, bytesRead, 0);
+		if (bytesSent <= 0)
+		{
+			close(clientFd);
+			clients.erase(clientFd);
+			return (false);
+		}
+	
+		client.updateLastActivity();
 		return (false);
 	}
-
-	client.updateLastActivity();
-	return (false);
 }
 
-void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients)
+void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& clients, std::map<int, int>& cgiPipeToClient)
 {
 	std::map<int, Client>::iterator it = clients.find(clientFd);
 	if (it == clients.end())
@@ -147,5 +165,20 @@ void	ConnectionManager::closeConnection(int clientFd, std::map<int, Client>& cli
 		std::cout << "Server closed connection of client: "
 				  << clientFd << " because of timeout!" << std::endl;
 
+	if (it->second.isCgiRunning())
+	{
+		pid_t	pid = it->second.getCgiPid();
+		int		pipeFd = it->second.getCgiPipeEnd();
+		if (pid > 0)
+		{
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+		}
+		_epollInstance.delFd(pipeFd);
+		close(pipeFd);
+		cgiPipeToClient.erase(pipeFd);
+	}
+
 	clients.erase(it);
+	std::cout << "client: " << clientFd << " has been removed from clients map" << std::endl;
 }

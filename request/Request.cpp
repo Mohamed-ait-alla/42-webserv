@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/24 18:30:42 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/26 11:42:01 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -322,26 +322,13 @@ bool Request::pathGCIisFile(std::string path) {
   return false;
 }
 
-// // * Parse queries
-// std::map<std::string, std::string>
-// Request::parseQueries(const std::string &uri) {
-//   std::map<std::string, std::string> result;
 
-//   std::stringstream ss(uri);
-//   std::string line;
+void	Request::setCgiResponse(const std::string& cgiResponse)
+{
+	_cgiResponse = cgiResponse;
+}
 
-//   while (std::getline(ss, line, '&')) {
-//     size_t pos = line.find("=");
-
-//     if (pos == std::string::npos) {
-//       continue;
-//     }
-
-//     std::string key = line.substr(0, pos);
-//     std::string value = line.substr(pos + 1);
-
-//     result[key] = value;
-//   }
-
-//   return result;
-// }
+const std::string& Request::getCgiResponse() const
+{
+	return _cgiResponse;
+}

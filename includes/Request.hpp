@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 17:48:19 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/26 11:40:57 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ class Request : public Webserv {
   private:
     std::map<std::string, std::string> request;
     std::map<std::string, std::string> session;
+	std::string	_cgiResponse;
 
   public:
     METHOD method;
@@ -96,6 +97,6 @@ class Request : public Webserv {
     const bool &getIsCGI() const;
 
     bool pathGCIisFile(std::string path);
-    
-    // std::map<std::string, std::string> parseQueries(const std::string &uri);
+	void	setCgiResponse(const std::string& cgiResponse);
+	const std::string& getCgiResponse() const;
 };

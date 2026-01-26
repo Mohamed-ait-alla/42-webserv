@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 10:46:25 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/17 09:46:08 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/24 19:06:01 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #define EPOLL_TIMEOUT 1000
 
 
-class Epoll {
+class Epoll : Helper {
 
 	public:
 		Epoll();

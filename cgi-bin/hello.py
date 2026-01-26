@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+import sys
 
-/tmp/hsjsh
-print("Content-Type: text/html\r")
-print("Content-Type: text/html\r\n")
-print("\r\n")
-print("<h1>Hello, World!</h1>")
-line == "\r";
-ifstream
+# CGI header (REQUIRED)
+sys.stdout.write("Content-Type: text/plain\r\n\r\n")
 
-file.getline()
+sys.stdout.write("CGI Environment Variables:\n")
+sys.stdout.write("==========================\n")
 
-remove true;
-
-[key] = value;
+for key, value in os.environ.items():
+    sys.stdout.write(f"{key}={value}\n")

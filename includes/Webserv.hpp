@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:48:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/23 16:32:42 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 18:42:44 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,8 +74,7 @@ class Webserv {
       // * 5xx Server Error
       INTERNAL_SERVER_ERROR = 500,
       BAD_GATEWAY = 502,
+      SOMTHING_WENT_WRONG = 503,
       GATEWAY_TIMEOUT = 504
     };
-    // member functions
-    // void	throwError(std::string func);
 };

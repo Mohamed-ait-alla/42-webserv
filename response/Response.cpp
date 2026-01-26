@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/26 18:32:54 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/26 18:42:32 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -548,6 +548,8 @@ std::string Response::statusCodeDescription(STATUS_CODE statusCode) {
     return "500 Internal Server Error";
   } else if (statusCode == BAD_GATEWAY) {
     return "502 Bad Gateway";
+  } else if (statusCode == SOMTHING_WENT_WRONG) {
+    return "503 Somthing Went Wrong";
   } else if (statusCode == GATEWAY_TIMEOUT) {
     return "504 Gateway Timeout";
   }

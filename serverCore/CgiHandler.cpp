@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 13:51:56 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/26 17:57:03 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	envVect.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
-	envVect.push_back("PATH_INFO=" + req.cgi.pathInfo);
 	envVect.push_back("SERVER_NAME=" + req.cgi.host);
 	envVect.push_back("SERVER_PORT=" + req.cgi.port); // note: make dynamic later
 
@@ -62,7 +61,26 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	if (!req.cgi.query.empty())
 		envVect.push_back("QUERY_STRING=" + req.cgi.query);
 
-	// check for method if post get the headers
+	if (!req.cgi.pathInfo.empty())
+		envVect.push_back("PATH_INFO=" + req.cgi.pathInfo);
+
+	// check for method if post add the required headers
+	if (getMethodName(req.cgi.method) == "POST")
+	{
+		envVect.push_back("CONTENT_TYPE=" + req.cgi.contentType);
+		envVect.push_back("CONTENT_LENGTH=" + toString(req.cgi.contentLength));
+	}
+
+
+	std::map<std::string, std::string>				headers = req.cgi.headers;
+	std::map<std::string, std::string>::iterator	it = headers.begin();
+	for (; it != headers.end(); ++it)
+	{
+		std::string	key = "HTTP_" + it->first;
+		std::replace(key.begin(), key.end(), '-', '_');
+		envVect.push_back(key + "=" + it->second);
+	}
+	
 
 	char**	envp = new char*[envVect.size() + 1];
 	for (size_t i = 0; i < envVect.size(); i++)
@@ -74,15 +92,13 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	return (envp);
 }
 
-void	CgiHandler::executeScript(int pipeWriteEnd, char **argv, char **envp)
+void	CgiHandler::executeScript(int stdinReadEnd, int stdoutWriteEnd, char **argv, char **envp)
 {
-	dup2(pipeWriteEnd, STDOUT_FILENO);
-	// dup2(pipeFds[0], STDIN_FILENO);
-	close(pipeWriteEnd);
+	dup2(stdinReadEnd, STDIN_FILENO);
+	dup2(stdoutWriteEnd, STDOUT_FILENO);
 
-	// close(pipeFds[0]);
-	// close(pipeFds[1]);
-	
+	close(stdoutWriteEnd);
+	close(stdinReadEnd);
 	
 	execve(argv[0], argv, envp);
 
@@ -90,70 +106,20 @@ void	CgiHandler::executeScript(int pipeWriteEnd, char **argv, char **envp)
 	_exit(127);
 }
 
-// void	CgiHandler::readOutput(int pipeReadEnd)
-// {
-// 	char	buffer[4096];
-// 	ssize_t	bytesRead;
-	
-// 	_output.clear();
-	
-// 	while ((bytesRead = read(pipeReadEnd, buffer, sizeof(buffer))) > 0)
-// 	{
-// 		_output.append(buffer, bytesRead);
-// 	}
-// }
-
-// bool	CgiHandler::execute(const Request& req)
-// {
-// 	int		pipeFds[2];
-// 	pid_t	pid;
-// 	char**	argv = NULL;
-// 	char**	envp = NULL;
-
-// 	if (pipe(pipeFds) < 0)
-// 		throwError("pipe()");
-	
-// 	argv = buildArguments(req);
-// 	pid = fork();
-// 	if (pid < 0)
-// 	{
-// 		close(pipeFds[0]);
-// 		close(pipeFds[1]);
-// 		throwError("fork()");
-// 	}
-
-// 	if (pid == 0)
-// 	{
-// 		executeScript(pipeFds, argv, envp);
-// 		_exit(127);
-// 	}
-
-// 	close(pipeFds[1]);
-
-// 	readOutput(pipeFds[0]);
-// 	close(pipeFds[0]);
-
-// 	// std::cout << "----output Readed----\n";
-// 	// std::cout << _output << std::endl;
-
-// 	int status;
-// 	waitpid(pid, &status, 0);
-// 	_exitStatus = status;
-
-// 	return (_exitStatus);
-// }
-
-
 int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 {
-	int pipeFds[2];
+	int stdinPipe[2];
+	int stdoutPipe[2];
 	char **argv = NULL;
 	char **envp = NULL;
 
-	if (pipe(pipeFds) < 0)
-		throwError("pipe()");
+	if (pipe(stdinPipe) < 0)
+		throwError("pipe(stdin)");
 
-	setNonBlocking(pipeFds[0]);
+	if (pipe(stdoutPipe) < 0)
+		throwError("pipe(stdout)");
+
+	setNonBlocking(stdoutPipe[0]);
 		
 	argv = buildArguments(req);
 	envp = buildEnvVariables(req);
@@ -161,21 +127,31 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	pid_t	pid = fork();
 	if (pid < 0)
 	{
-		close(pipeFds[0]);
-		close(pipeFds[1]);
+		close(stdoutPipe[0]);
+		close(stdoutPipe[1]);
+		close(stdinPipe[0]);
+		close(stdinPipe[1]);
 		throwError("fork()");
 	}
 	
 	if (pid == 0)
 	{
-		close(pipeFds[0]);
-		executeScript(pipeFds[1], argv, envp);
+		close(stdinPipe[1]);
+		close(stdoutPipe[0]);
+		executeScript(stdinPipe[0], stdoutPipe[1], argv, envp);
 		_exit(127);
 	}
+	close(stdinPipe[0]);
+	close(stdoutPipe[1]);
 
-	close(pipeFds[1]);
+	if (getMethodName(req.cgi.method) == "POST")
+	{
+		write(stdinPipe[1], req.cgi.body.c_str(), req.cgi.body.size());
+	}
+	close(stdinPipe[1]);
+	
 	outPid = pid;
-	return (pipeFds[0]);
+	return (stdoutPipe[0]);
 }
 
 bool	CgiHandler::checkCgiStatus(pid_t pid, int& exitStatus)

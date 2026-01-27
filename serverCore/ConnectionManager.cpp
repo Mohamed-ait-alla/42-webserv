@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/25 18:46:04 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/27 12:54:19 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	}
 
 	Client&	client = clients[clientFd];
-	
+	buffer[bytesRead] = '\0';
 	client.appendRequest(buffer, bytesRead);
 	client.updateLastActivity();
 	if (!client.hasCompleteHeaders())

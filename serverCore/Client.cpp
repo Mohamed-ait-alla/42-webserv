@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/23 16:36:26 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/27 12:55:44 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,9 +168,9 @@ void	Client::appendCgiOutput(const std::string& data)
 	_cgiOutput += data;
 }
 
-void	Client::appendRequest(const std::string& data, size_t length)
+void	Client::appendRequest(const char* buffer, size_t length)
 {
-	_request.append(data.c_str(), length);
+	_request.append(buffer, length);
 	_bytesReceived += length;
 }
 

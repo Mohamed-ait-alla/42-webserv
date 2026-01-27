@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -64,7 +64,8 @@
           // * make response show
           responseStatus.innerHTML =
             "DELETE Response File/Folder Deleted Successfully ✅";
-        } else {
+        } else if (response.status == 404) {
+          // window.location.href = "../pages/errors/404.html";
           responseStatus.innerHTML = "DELETE Response File/Folder Not Found 🚫";
           throw new Error("Failed to fetch data");
         }

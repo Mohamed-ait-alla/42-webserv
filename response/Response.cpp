@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/26 18:42:32 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/27 10:08:52 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,7 +452,7 @@ void Response::DELETE_METHOD(Request &req) {
                    "=========\n";
       std::cout << "==========================================================="
                    "=========\n";
-      // todo: check return in config file
+
       // * redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
         // * Generate response (only headers)
@@ -469,27 +469,11 @@ void Response::DELETE_METHOD(Request &req) {
 
         return;
       }
+
       // * check method
-      if (this->checkAllowMethodsOfLocation(
+      if (!this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
               "delete")) {
-        // todo: move all logic here and remove this->generateResponse(req);
-        // todo: from else section
-        // // * check if is file or directory
-        // bool isFile =
-        //     this->isFile(req.config.locations[this->getIndexLocation()].root
-        //     +
-        //                  req.config.locations[this->getIndexLocation()].path);
-        // // * check if the path is file
-        // if (!isFile) {
-        //   this->setStatusCode(FORBIDDEN);
-        //   req.path = req.config.error_page[FORBIDDEN];
-        //   // * Generate response
-        //   this->generateResponse(req);
-        //   return;
-        // }
-
-      } else {
         this->setStatusCode(METHOD_NOT_ALLOWED);
         req.path = req.config.error_page[METHOD_NOT_ALLOWED];
         // * Generate response
@@ -499,8 +483,7 @@ void Response::DELETE_METHOD(Request &req) {
     }
   }
 
-  // * check if we have the file / folder
-  // * remove slash from begin of req path
+  // * check if we have a file or folder
   std::ifstream file((req.config.root + req.path).c_str());
   if (!file.is_open()) {
     // todo: why page not found is not work

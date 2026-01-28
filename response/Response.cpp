@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/27 10:08:52 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/28 13:30:12 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,12 +93,12 @@ void Response::setHeaders(const Request &req) {
   std::string sessionIdFromBrowser = this->parseFormURLEncoded(
       req.getRequest().count("Cookie") ? req.getRequest().find("Cookie")->second
                                        : "")["session_id"];
-  std::cout << "session_id from browser: " << sessionIdFromBrowser << std::endl;
+//   std::cout << "session_id from browser: " << sessionIdFromBrowser << std::endl;
   std::string sessionIdFromServer =
       req.getSession().count("session_id")
           ? req.getSession().find("session_id")->second
           : "";
-  std::cout << "session_id from server: " << sessionIdFromServer << std::endl;
+//   std::cout << "session_id from server: " << sessionIdFromServer << std::endl;
 
   // * check if is redirection
   if (this->getIsRedirection() && this->getStatusCode() == FOUND) {
@@ -241,13 +241,13 @@ void Response::GET_METHOD(Request &req) {
     }
   }
 
-  std::cout << "===============> req.path: " << req.path << std::endl;
+//   std::cout << "===============> req.path: " << req.path << std::endl;
   if (req.path == "/") {
     req.path = req.config.index;
   }
 
-  std::cout << "===============> req.config.root: " << req.config.root
-            << std::endl;
+//   std::cout << "===============> req.config.root: " << req.config.root
+//             << std::endl;
 
   // * check auth cookies of user
   if (req.path == "/game.html") {
@@ -291,11 +291,11 @@ void Response::POST_METHOD(Request &req) {
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
         this->setHeaders(req);
 
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
+        // std::cout << "-----------------------Headers------------------------"
+                //   << std::endl;
         std::cout << getHeaders() << std::endl;
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
+        // std::cout << "-----------------------Headers------------------------"
+        //           << std::endl;
 
         return;
       }
@@ -949,7 +949,7 @@ void Response::generateResponse(Request &req) {
     fullPath.append(req.path);
   }
 
-  std::cout << "fullPath=====================> " << fullPath << std::endl;
+//   std::cout << "fullPath=====================> " << fullPath << std::endl;
 
   // * check the file permissions and if the file exist
   // todo: change the path of error pages by config file and check if we have
@@ -989,17 +989,17 @@ void Response::generateResponse(Request &req) {
   int fd = open(fullPath.c_str(), O_RDONLY);
   this->setBodyFd(fd);
 
-  std::cout << "-----------------------path of file------------------------"
-            << std::endl;
-  std::cout << fullPath << std::endl;
-  std::cout << "-----------------------path of file------------------------"
-            << std::endl;
+//   std::cout << "-----------------------path of file------------------------"
+//             << std::endl;
+//   std::cout << fullPath << std::endl;
+//   std::cout << "-----------------------path of file------------------------"
+//             << std::endl;
 
-  std::cout << "-----------------------Headers------------------------"
-            << std::endl;
-  std::cout << getHeaders() << std::endl;
-  std::cout << "-----------------------Headers------------------------"
-            << std::endl;
+//   std::cout << "-----------------------Headers------------------------"
+//             << std::endl;
+//   std::cout << getHeaders() << std::endl;
+//   std::cout << "-----------------------Headers------------------------"
+//             << std::endl;
 
   // ! close root path
   rootPath.close();
@@ -1008,16 +1008,16 @@ void Response::generateResponse(Request &req) {
 // * Response
 void Response::response(Request &req) {
   if (req.method == GET) {
-    std::cout << "=======GET=======" << std::endl;
+    // std::cout << "=======GET=======" << std::endl;
     this->GET_METHOD(req);
   } else if (req.method == POST) {
-    std::cout << "=======POST=======" << std::endl;
+    // std::cout << "=======POST=======" << std::endl;
     this->POST_METHOD(req);
   } else if (req.method == DELETE) {
-    std::cout << "=======DELETE=======" << std::endl;
+    // std::cout << "=======DELETE=======" << std::endl;
     this->DELETE_METHOD(req);
   } else {
     this->methodNotAllowed(req);
-    std::cout << "=======ELSE=======" << std::endl;
+    // std::cout << "=======ELSE=======" << std::endl;
   }
 }

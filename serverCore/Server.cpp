@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.cpp                                         :+:      :+:    :+:   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/27 13:03:38 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:05:33 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,11 @@ void	Server::checkClientTimeOut()
 		{
 			if (now - client.getCgiStartTime() > CGI_TIMEOUT)
 			{
-				std::cout << "----⏰ handle CGI timeOut ----\n";
+				logMessage(LOG_TIMEOUT,
+							"CGI timed out for client fd=" +
+							toString(client.getClientFd()) +
+							"(pid=" + toString(client.getCgiPid()) + ")");
+
 				client.setCgiTimedOut(true);
 				handleCgiError(client.getClientFd(), client.getCgiPipeEnd());
 			}
@@ -52,7 +56,7 @@ void	Server::checkClientTimeOut()
 			int fd = it->first;
 			client.setTimedOut();
 			++it;
-			_connectionManager.closeConnection(fd, _clients, _cgiPipeToClient);
+			_connectionManager.closeConnection(fd, _clients, _cgiPipeToClient, "Client timeout");
 		}
 		else
 			++it;
@@ -77,7 +81,7 @@ void	Server::handleError(int clientFd)
 {
 	std::cout << "❌ Error or closing connection for client " << clientFd << std::endl;
 
-	_epoll.delFd(clientFd);
+	_epoll.delFd(clientFd, "Error OR Client closed connection");
 	
 	Client& client = _clients[clientFd];
 	if (client.getBodyFd() >= 0)
@@ -109,7 +113,7 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 			kill(client.getCgiPid(), SIGKILL);
 			waitpid(client.getCgiPid(), NULL, 0);
 		}
-		_epoll.delFd(pipeFd);
+		_epoll.delFd(pipeFd, "CGI timed out");
 		close(pipeFd);
 		
 		std::string	body = loadErrorPage(504);
@@ -123,6 +127,7 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 		_epoll.modFd(clientFd, EPOLLOUT);
 		_cgiPipeToClient.erase(pipeFd);
 		client.setCgiRunning(false);
+		client.setStatusCode(Webserv::GATEWAY_TIMEOUT);
 	}
 	else
 	{
@@ -132,7 +137,8 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 		headers["Content-Type"] = "text/html";
 		headers["Content-Length"] = toString(body.size());
 
-		req.setCgiResponse(buildCgiResponse(500, "Internal Server Error", headers, body));	
+		req.setCgiResponse(buildCgiResponse(500, "Internal Server Error", headers, body));
+		client.setStatusCode(Webserv::INTERNAL_SERVER_ERROR);
 	}
 }
 
@@ -157,7 +163,7 @@ void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 	}
 
 	// CGI finished or failed
-	_epoll.delFd(pipeFd);
+	_epoll.delFd(pipeFd, "CGI finished or failed");
 	close(pipeFd);
 
 	int exitStatus;
@@ -172,6 +178,7 @@ void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 		CgiResult cgi = parseCgiOutput(client.getCgiOutput());
 
 		req.setCgiResponse(buildCgiResponse(200, "OK", cgi.headers, cgi.body));
+		client.setStatusCode(Webserv::OK);
 	}
 
 	client.setCgiRunning(false);
@@ -203,9 +210,10 @@ void	Server::startCgiForClient(int clientFd, const Request& req)
 
 	_cgiPipeToClient[pipeFd] = clientFd;
 
-
-    std::cout << "✅ CGI started for client " << clientFd 
-              << " (pipe fd: " << pipeFd << ", pid: " << pid << ")\n";
+	logMessage(LOG_CGI,
+				"    client fd=" + toString(clientFd) +
+				" started (pid=" + toString(pid) + ", pipeFd=" +
+				toString(pipeFd) + ")");
 }
 
 void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
@@ -221,6 +229,11 @@ void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
 		{
 			req.setRequest(_clients[fd].getRequest());
 			_clientRequests[fd] = req;
+			logMessage(LOG_REQ,
+						"    fd=" + toString(fd) + " " +
+						req.getMethodByName(req.method) + " " +
+						req.path + " HTTP/1.1");
+
 			if (req.getIsCGI())
 				startCgiForClient(fd, req);
 			else
@@ -260,8 +273,11 @@ void	Server::run(Request &req)
 
 		// socket listening
 		_listener.startListening();
-
-		std::cout << "🚀 Server running on " << _listener.getHost() << ":" << _listener.getPort() << std::endl;
+		
+		logMessage(LOG_INFO,
+					"   🚀 Server running on " +
+					_listener.getHost() + ":" +
+					toString(_listener.getPort()));
 	}
 
 	// setup server socket to accept new connections

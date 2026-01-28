@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/27 13:03:09 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 13:25:21 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ Request::Request() : method(ELSE), path(""), httpV(""), isCGI(false) {
 // * Default Constructor of struct CgiInfo
 Request::CgiInfo::CgiInfo()
     // todo: all all attributes of struct
-    : method(GET), scriptPath(""), pathInfo("")
+    : method("GET"), scriptPath(""), pathInfo("")
       // , query("")
       ,
       body(""), isChunked(false), contentLength(0) {}
@@ -182,7 +182,7 @@ void Request::setRequest(const std::string &req) {
                   this->request.find("Host")->second.find(":") + 1)
             : "";
     // * copy method of request to cgi method
-    this->cgi.method = this->method;
+    this->cgi.method = this->getMethodByName(this->method);
     // * copy headers of request to cgi headers
     this->cgi.headers = this->request;
     // * copy body of request to cgi body
@@ -207,56 +207,56 @@ void Request::setRequest(const std::string &req) {
                                 : "";
   }
 
-  std::cout << "=================is cgi===================\n";
-  std::cout << this->isCGI << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================is cgi===================\n";
+//   std::cout << this->isCGI << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================host===================\n";
-  std::cout << this->cgi.host << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================host===================\n";
+//   std::cout << this->cgi.host << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================listen===================\n";
-  std::cout << this->cgi.port << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================listen===================\n";
+//   std::cout << this->cgi.port << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================method===================\n";
-  std::cout << this->cgi.method << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================method===================\n";
+//   std::cout << this->cgi.method << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================script path===================\n";
-  std::cout << this->cgi.scriptPath << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================script path===================\n";
+//   std::cout << this->cgi.scriptPath << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================path info===================\n";
-  std::cout << this->cgi.pathInfo << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================path info===================\n";
+//   std::cout << this->cgi.pathInfo << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================queries===================\n";
-  std::cout << this->cgi.query << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================queries===================\n";
+//   std::cout << this->cgi.query << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================headers===================\n";
-  std::map<std::string, std::string>::iterator it = this->cgi.headers.begin();
-  for (; it != this->cgi.headers.end(); ++it) {
-    std::cout << it->first << ": " << it->second << std::endl;
-  }
-  std::cout << "===============================================\n";
+//   std::cout << "=================headers===================\n";
+//   std::map<std::string, std::string>::iterator it = this->cgi.headers.begin();
+//   for (; it != this->cgi.headers.end(); ++it) {
+//     std::cout << it->first << ": " << it->second << std::endl;
+//   }
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================body===================\n";
-  std::cout << this->cgi.body << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================body===================\n";
+//   std::cout << this->cgi.body << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================isChunked===================\n";
-  std::cout << this->cgi.isChunked << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================isChunked===================\n";
+//   std::cout << this->cgi.isChunked << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================contentLength===================\n";
-  std::cout << this->cgi.contentLength << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================contentLength===================\n";
+//   std::cout << this->cgi.contentLength << std::endl;
+//   std::cout << "===============================================\n";
 
-  std::cout << "=================contentType===================\n";
-  std::cout << this->cgi.contentType << std::endl;
-  std::cout << "===============================================\n";
+//   std::cout << "=================contentType===================\n";
+//   std::cout << this->cgi.contentType << std::endl;
+//   std::cout << "===============================================\n";
 }
 
 const std::map<std::string, std::string> &Request::getRequest() const {
@@ -350,4 +350,23 @@ void	Request::setCgiResponse(const std::string& cgiResponse)
 const std::string& Request::getCgiResponse() const
 {
 	return _cgiResponse;
+}
+
+std::string	Request::getMethodByName(int enumFlag)
+{
+	switch (enumFlag)
+	{
+	case 0:
+		return ("GET");
+		break;
+	case 1:
+		return ("POST");
+		break;
+	case 2:
+		return ("DELETE");
+		break;
+	
+	default:
+		return ("NOT ALLOWED METHOD");
+	}
 }

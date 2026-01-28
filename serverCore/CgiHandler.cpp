@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/27 19:09:46 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 14:25:53 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,30 +26,13 @@ char**	CgiHandler::buildArguments(const Request& req)
 	return (argv);
 }
 
-std::string	CgiHandler::getMethodName(int enumFlag)
-{
-	switch (enumFlag)
-	{
-	case 0:
-		return ("GET");
-		break;
-	case 1:
-		return ("POST");
-		break;
-	case 2:
-		return ("DELETE");
-		break;
-	
-	default:
-		return ("NOT ALLOWED METHOD");
-	}
-}
+
 
 char**	CgiHandler::buildEnvVariables(const Request& req)
 {
 	std::vector<std::string> envVect;
 
-	envVect.push_back("REQUEST_METHOD=" + getMethodName(req.cgi.method));
+	envVect.push_back("REQUEST_METHOD=" + req.cgi.method);
 	envVect.push_back("SCRIPT_NAME=" + req.cgi.scriptPath);
 	envVect.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
@@ -65,7 +48,7 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 		envVect.push_back("PATH_INFO=" + req.cgi.pathInfo);
 
 	// check for method if post add the required headers
-	if (getMethodName(req.cgi.method) == "POST")
+	if (req.cgi.method == "POST")
 	{
 		envVect.push_back("CONTENT_TYPE=" + req.cgi.contentType);
 		envVect.push_back("CONTENT_LENGTH=" + toString(req.cgi.contentLength));
@@ -144,12 +127,12 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	close(stdinPipe[0]);
 	close(stdoutPipe[1]);
 
-	if (getMethodName(req.cgi.method) == "POST")
+	if (req.cgi.method == "POST")
 	{
 		write(stdinPipe[1], req.cgi.body.c_str(), req.cgi.body.size());
 	}
 	close(stdinPipe[1]);
-	
+
 	outPid = pid;
 	return (stdoutPipe[0]);
 }

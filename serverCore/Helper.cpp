@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 07:06:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/24 16:12:47 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:11:43 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,8 @@ void	Helper::setNonBlocking(int fd)
 
 void	Helper::throwError(const std::string& sysCallFunc)
 {
-	 throw std::runtime_error(sysCallFunc + "failed: " + strerror(errno));
+	logMessage(LOG_ERROR, "  " + sysCallFunc + " has been failed");
+	throw std::runtime_error(sysCallFunc + " failed: " + strerror(errno));
 }
 
 std::string	Helper::readFile(const std::string& path)

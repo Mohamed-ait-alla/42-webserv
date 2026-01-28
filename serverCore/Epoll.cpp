@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 10:46:40 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/25 11:42:02 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:12:24 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ void	Epoll::addFd(int fd, uint32_t event)
 
 	if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, fd, &ev) < 0)
 		throwError("epoll_ctl(EPOLL_CTL_ADD)");
-	std::cout << "fd: " << fd << " added to epoll successfully\n";
+
+	logEpollAdd(fd);
 }
 
 void	Epoll::modFd(int fd, uint32_t events)
@@ -48,13 +49,16 @@ void	Epoll::modFd(int fd, uint32_t events)
 
 	if (epoll_ctl(_epollfd, EPOLL_CTL_MOD, fd, &ev) < 0)
 		throwError("epoll_ctl(EPOLL_CTL_MOD)");
-	std::cout << fd << " has been modified" << std::endl;
+
+	logEpollMod(fd, events);
 }
 
-void	Epoll::delFd(int fd)
+void	Epoll::delFd(int fd, const std::string& reason)
 {
 	if (epoll_ctl(_epollfd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		throwError("epoll_ctl(EPOLL_CTL_DEL)");
+
+	logepollDel(fd, reason);
 }
 
 int	Epoll::wait(struct epoll_event *events, int maxEvents)
@@ -68,4 +72,22 @@ int	Epoll::wait(struct epoll_event *events, int maxEvents)
 int	Epoll::getEpollFd() const
 {
 	return (_epollfd);
+}
+
+void	Epoll::logEpollAdd(int fd)
+{
+	logMessage(LOG_EPOLL, "  fd=" + toString(fd) + " added");
+}
+
+void	Epoll::logEpollMod(int fd, uint32_t event)
+{
+	if (event == EPOLLIN)
+		logMessage(LOG_EPOLL, "  fd=" + toString(fd) + " modified (EPOLLIN)");
+	if (event == EPOLLOUT)
+		logMessage(LOG_EPOLL, "  fd=" + toString(fd) + " modified (EPOLLOUT)");
+}
+
+void	Epoll::logepollDel(int fd, const std::string& reason)
+{
+	logMessage(LOG_EPOLL, "  fd=" + toString(fd) + " removed (" + reason + ")");
 }

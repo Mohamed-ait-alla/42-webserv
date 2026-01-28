@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:43:47 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 17:48:03 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 10:59:22 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,5 @@ class CgiHandler : public Helper {
 		int		startCgiScript(const Request& req, pid_t& outPid);
 		ssize_t	readChunk(int pipeFd, char *buffer, size_t size);
 		bool	checkCgiStatus(pid_t pid, int& exitStatus);
-		std::string getMethodName(int enumFlag);
 
 };

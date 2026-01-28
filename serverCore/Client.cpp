@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/27 12:55:44 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 12:57:09 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,11 @@ void	Client::setTimedOut()
 	_isTimedOut = true;
 }
 
+void	Client::setStatusCode(STATUS_CODE statusCode)
+{
+	_statusCode = statusCode;
+}
+
 void	Client::setCgiPipeEnd(int fd)
 {
 	_cgiPipeFd = fd;
@@ -129,6 +134,11 @@ int		Client::getClientFd() const
 bool	Client::getIsTimedOut() const
 {
 	return (_isTimedOut);
+}
+
+Webserv::STATUS_CODE	Client::getStatusCode() const
+{
+	return (_statusCode);
 }
 
 int	Client::getCgiPipeEnd() const

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 14:25:53 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/28 21:44:56 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,10 +17,9 @@
 char**	CgiHandler::buildArguments(const Request& req)
 {
 	char**	argv = new char*[3];
-	std::string path = "./" + req.cgi.scriptPath;
 
 	argv[0] = strdup(req.config.cgi_path[0].c_str());
-	argv[1] = strdup(path.c_str());
+	argv[1] = strdup(req.cgi.scriptPath.c_str());
 	argv[2] = NULL;
 
 	return (argv);

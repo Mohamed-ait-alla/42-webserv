@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 21:44:56 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/29 11:47:38 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
 	envVect.push_back("SERVER_NAME=" + req.cgi.host);
-	envVect.push_back("SERVER_PORT=" + req.cgi.port); // note: make dynamic later
+	envVect.push_back("SERVER_PORT=" + req.cgi.port);
 
 	// check for query here
 	if (!req.cgi.query.empty())
@@ -131,6 +131,14 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 		write(stdinPipe[1], req.cgi.body.c_str(), req.cgi.body.size());
 	}
 	close(stdinPipe[1]);
+
+	for (int i = 0; argv[i] != NULL; i++)
+		free(argv[i]);
+	delete[] argv;
+		
+	for (int i = 0; envp && envp[i] != NULL; i++)
+		free(envp[i]);
+	delete[] envp;
 
 	outPid = pid;
 	return (stdoutPipe[0]);

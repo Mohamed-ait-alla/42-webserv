@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/29 11:13:50 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/29 22:54:29 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,15 @@ void Request::setRequest(const std::string &req) {
   // ! check if the request is not empty if not we need to clear the old data
   if (!this->request.empty()) {
     this->request.clear();
+  }
+
+  // ! check if the (path, httpV) is not empty if not we need to clear
+  // ! the old data
+  if (!this->path.empty()) {
+    this->path.clear();
+  }
+  if (!this->httpV.empty()) {
+    this->httpV.clear();
   }
 
   // ! check if the cgi is not empty if not we need to clear the old data
@@ -89,21 +98,75 @@ void Request::setRequest(const std::string &req) {
 
     firstLine >> this->path >> this->httpV;
 
+    // * check http version
+    // if (this->httpV != "HTTP/1.1\r" || this->httpV.empty() || path.empty()) {
+    if (this->httpV != "HTTP/1.1") {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+
     // ! check if request is CGI
     this->checkCGI(this->path);
   }
+
+  std::cout << "==========REQUEST==========\n";
+  std::cout << req;
 
   // * get the headers
   std::string key, value;
   size_t pos;
   while (std::getline(ss, line)) {
     pos = line.find(":");
+
     if (pos == std::string::npos) {
+      if (line != "\r") {
+        this->method = ELSE;
+      }
       break;
     }
 
     key = line.substr(0, pos);
     value = line.substr(pos + 2, line.length());
+
+    // std::cout << "+++++++++++++++++++++++++++++\n";
+    // std::cout << "key: " << key << std::endl;
+    // std::cout << "value: " << value << std::endl;
+    // std::cout << "+++++++++++++++++++++++++++++\n";
+
+    // * check if key or value is empty
+    if (key.empty() || value.empty()) {
+      // std::cout << "----------------------------\n";
+      // std::cout << "key: " << key << std::endl;
+      // std::cout << "value: " << value << std::endl;
+      // std::cout << "----------------------------\n";
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+
+    // * check host and port
+    if (key == "Host") {
+      // * check host
+      size_t posHost;
+      posHost = value.find(":");
+      if (posHost != std::string::npos) {
+        std::string reqHost = value.substr(0, posHost);
+        if (reqHost != this->config.host) {
+          this->method = ELSE; // * return BAD_REQUEST
+        }
+
+        int reqListen = std::atoi(value.substr(posHost + 1).c_str());
+        std::vector<int>::iterator it = std::find(
+            this->config.listen.begin(), this->config.listen.end(), reqListen);
+        if (it == this->config.listen.end()) {
+          this->method = ELSE; // * return BAD_REQUEST
+        }
+
+        std::cout << "----------------------------\n";
+        std::cout << "reqHost: " << reqHost << std::endl;
+        std::cout << "reqListen: " << reqListen << std::endl;
+        std::cout << "----------------------------\n";
+      } else {
+        this->method = ELSE; // * return BAD_REQUEST
+      }
+    }
 
     // * check if client send cookies
     if (key == "Cookie") {
@@ -126,7 +189,7 @@ void Request::setRequest(const std::string &req) {
     this->request[key] = value;
   }
 
-  // * CORRECT
+  // * Parse Body
 
   std::string contentType =
       this->request.count("Content-Type") ? this->request["Content-Type"] : "";

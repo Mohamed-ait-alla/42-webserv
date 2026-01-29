@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/28 21:51:16 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/29 11:13:50 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,17 +26,46 @@ Request::Request() : method(ELSE), path(""), httpV(""), isCGI(false) {
 
 // * Default Constructor of struct CgiInfo
 Request::CgiInfo::CgiInfo()
-    // todo: all all attributes of struct
-    : method("GET"), scriptPath(""), pathInfo("")
-      // , query("")
-      ,
-      body(""), isChunked(false), contentLength(0) {}
+    : host(""), port(""), method("GET"), scriptPath(""), pathInfo(""),
+      query(""), body(""), contentLength(0), contentType("") {}
 
 // * Setters & Getters
 void Request::setRequest(const std::string &req) {
   // ! check if the request is not empty if not we need to clear the old data
   if (!this->request.empty()) {
     this->request.clear();
+  }
+
+  // ! check if the cgi is not empty if not we need to clear the old data
+  if (!this->cgi.host.empty()) {
+    this->cgi.host.clear();
+  }
+  if (!this->cgi.port.empty()) {
+    this->cgi.port.clear();
+  }
+  if (!this->cgi.method.empty()) {
+    this->cgi.method.clear();
+  }
+  if (!this->cgi.scriptPath.empty()) {
+    this->cgi.scriptPath.clear();
+  }
+  if (!this->cgi.pathInfo.empty()) {
+    this->cgi.pathInfo.clear();
+  }
+  if (!this->cgi.query.empty()) {
+    this->cgi.query.clear();
+  }
+  if (!this->cgi.headers.empty()) {
+    this->cgi.headers.clear();
+  }
+  if (!this->cgi.body.empty()) {
+    this->cgi.body.clear();
+  }
+  if (this->cgi.contentLength != 0) {
+    this->cgi.contentLength = 0;
+  }
+  if (!this->cgi.contentType.empty()) {
+    this->cgi.contentType.clear();
   }
 
   bool iFoundCookie = false;
@@ -62,9 +91,6 @@ void Request::setRequest(const std::string &req) {
 
     // ! check if request is CGI
     this->checkCGI(this->path);
-    // if (this->getIsCGI()) {
-    //   return; // ! if is CGI we don't need to build request just need path
-    // }
   }
 
   // * get the headers
@@ -188,12 +214,6 @@ void Request::setRequest(const std::string &req) {
     this->cgi.body = this->request.count("post-body")
                          ? this->request.find("post-body")->second
                          : "";
-    // * check if is chunked
-    this->cgi.isChunked =
-        this->request.count("Transfer-Encoding") &&
-                this->request.find("Transfer-Encoding")->second == "chunked\r"
-            ? true
-            : false;
     // * add Content Length
     this->cgi.contentLength =
         this->request.count("Content-Length")
@@ -205,57 +225,6 @@ void Request::setRequest(const std::string &req) {
                                 ? this->request.find("Content-Type")->second
                                 : "";
   }
-
-  std::cout << "=================is cgi===================\n";
-  std::cout << this->isCGI << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================host===================\n";
-  std::cout << this->cgi.host << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================listen===================\n";
-  std::cout << this->cgi.port << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================method===================\n";
-  std::cout << this->cgi.method << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================script path===================\n";
-  std::cout << this->cgi.scriptPath << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================path info===================\n";
-  std::cout << this->cgi.pathInfo << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================queries===================\n";
-  std::cout << this->cgi.query << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================headers===================\n";
-  std::map<std::string, std::string>::iterator it = this->cgi.headers.begin();
-  for (; it != this->cgi.headers.end(); ++it) {
-    std::cout << it->first << ": " << it->second << std::endl;
-  }
-  std::cout << "===============================================\n";
-
-  std::cout << "=================body===================\n";
-  std::cout << this->cgi.body << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================isChunked===================\n";
-  std::cout << this->cgi.isChunked << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================contentLength===================\n";
-  std::cout << this->cgi.contentLength << std::endl;
-  std::cout << "===============================================\n";
-
-  std::cout << "=================contentType===================\n";
-  std::cout << this->cgi.contentType << std::endl;
-  std::cout << "===============================================\n";
 }
 
 const std::map<std::string, std::string> &Request::getRequest() const {
@@ -315,7 +284,6 @@ void Request::checkCGI(std::string path) {
 
   // * Finally, handle queries
   if (pos != std::string::npos) {
-    // this->cgi.queries = this->parseQueries(path.substr(pos + 1));
     this->cgi.query = path.substr(pos + 1);
   }
 

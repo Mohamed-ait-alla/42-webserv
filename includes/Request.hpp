@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:18:05 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 11:00:49 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/29 11:03:34 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,11 +74,9 @@ class Request : public Webserv {
       std::string method;
       std::string scriptPath;
       std::string pathInfo;
-      // std::map<std::string,std::string> queries;
       std::string query;
       std::map<std::string,std::string> headers;
       std::string body;
-      bool isChunked;
       size_t contentLength;
       std::string contentType;
     };

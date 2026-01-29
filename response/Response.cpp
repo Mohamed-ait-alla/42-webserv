@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/28 13:30:12 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/29 11:01:24 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,8 @@
 
 // * Default Constructor
 Response::Response()
-    // todo: bodyfd i need to set him -1 here
-
     : status_code(OK), statusLine(""), contentType(""), contentLength(""),
-      headers(""), indexLocation(-1), isRedirection(false), bodyFd(-1)
-
-{
+      headers(""), indexLocation(-1), isRedirection(false), bodyFd(-1) {
   this->setMimeTypes();
 }
 
@@ -93,12 +89,10 @@ void Response::setHeaders(const Request &req) {
   std::string sessionIdFromBrowser = this->parseFormURLEncoded(
       req.getRequest().count("Cookie") ? req.getRequest().find("Cookie")->second
                                        : "")["session_id"];
-//   std::cout << "session_id from browser: " << sessionIdFromBrowser << std::endl;
   std::string sessionIdFromServer =
       req.getSession().count("session_id")
           ? req.getSession().find("session_id")->second
           : "";
-//   std::cout << "session_id from server: " << sessionIdFromServer << std::endl;
 
   // * check if is redirection
   if (this->getIsRedirection() && this->getStatusCode() == FOUND) {
@@ -156,7 +150,6 @@ int Response::getBodyFd() const { return this->bodyFd; }
 // Server: webserv/1.0
 // Content-Type: text/html
 // Content-Length: 128
-// Connection: close
 
 // <body>
 
@@ -175,12 +168,6 @@ void Response::GET_METHOD(Request &req) {
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
         this->setHeaders(req);
-
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
-        std::cout << getHeaders() << std::endl;
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
 
         return;
       }
@@ -204,17 +191,12 @@ void Response::GET_METHOD(Request &req) {
                 req.config.locations[this->getIndexLocation()].root +
                 req.config.locations[this->getIndexLocation()].path;
             req.path = this->generatePageOfAutoIndex(req, pathOfAutoIndex);
-            std::cout
-                << "################page auto index is on################: "
-                << req.config.locations[this->getIndexLocation()].autoindex
-                << std::endl;
           }
         }
         // * check if autoindex is off and we dont have a index html
         else if (!req.config.locations[this->getIndexLocation()].autoindex &&
                  req.config.locations[this->getIndexLocation()].index.empty() &&
                  !isFile) {
-          std::cout << "################page is forbidden################\n";
           this->setStatusCode(FORBIDDEN);
           req.path = req.config.error_page[FORBIDDEN];
 
@@ -241,13 +223,9 @@ void Response::GET_METHOD(Request &req) {
     }
   }
 
-//   std::cout << "===============> req.path: " << req.path << std::endl;
   if (req.path == "/") {
     req.path = req.config.index;
   }
-
-//   std::cout << "===============> req.config.root: " << req.config.root
-//             << std::endl;
 
   // * check auth cookies of user
   if (req.path == "/game.html") {
@@ -290,12 +268,6 @@ void Response::POST_METHOD(Request &req) {
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
         this->setHeaders(req);
-
-        // std::cout << "-----------------------Headers------------------------"
-                //   << std::endl;
-        std::cout << getHeaders() << std::endl;
-        // std::cout << "-----------------------Headers------------------------"
-        //           << std::endl;
 
         return;
       }
@@ -396,7 +368,6 @@ void Response::POST_METHOD(Request &req) {
             (req.config.root + "/post-request-upload.html").c_str(),
             std::ios::out | std::ios::trunc);
         if (!responseFile.is_open()) {
-          // todo: print error in terminal
           std::cerr << "file is not created(Upload file)" << std::endl;
           return;
         }
@@ -448,11 +419,6 @@ void Response::DELETE_METHOD(Request &req) {
   // * check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      std::cout << "==========================================================="
-                   "=========\n";
-      std::cout << "==========================================================="
-                   "=========\n";
-
       // * redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
         // * Generate response (only headers)
@@ -460,12 +426,6 @@ void Response::DELETE_METHOD(Request &req) {
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
         this->setHeaders(req);
-
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
-        std::cout << getHeaders() << std::endl;
-        std::cout << "-----------------------Headers------------------------"
-                  << std::endl;
 
         return;
       }
@@ -486,7 +446,6 @@ void Response::DELETE_METHOD(Request &req) {
   // * check if we have a file or folder
   std::ifstream file((req.config.root + req.path).c_str());
   if (!file.is_open()) {
-    // todo: why page not found is not work
     this->setStatusCode(NOT_FOUND);
     req.path = req.config.error_page[NOT_FOUND];
   } else {
@@ -640,7 +599,6 @@ void Response::addDataToBody(const Request &req) {
   // ? std::ios::trunc remove all things in file
   std::ofstream file(fullPath.c_str(), std::ios::out | std::ios::trunc);
   if (!file.is_open()) {
-    // todo: print error in terminal
     std::cerr << "file is not open(addDataToBoddy)" << std::endl;
     return;
   }
@@ -914,12 +872,10 @@ bool Response::isUserInSession(const Request &req, std::string session_id) {
 
 // * Method Not Allowed
 void Response::methodNotAllowed(Request &req) {
-  // todo: link the fullPath (page of METHOD_NOT_ALLOWED) with configfile
   // * set status code
   this->setStatusCode(METHOD_NOT_ALLOWED);
 
   // * full path
-  // todo: get error from config file
   req.path = req.config.error_page[METHOD_NOT_ALLOWED];
 
   // * Generate response
@@ -932,7 +888,10 @@ void Response::generateResponse(Request &req) {
 
   // * root directory
   std::ifstream rootPath(req.config.root.c_str());
-  if (!rootPath.is_open()) {
+  if (!rootPath.is_open() ||
+      // * check root directory is out of folder of program
+      (!req.config.root.empty() && req.config.root[0] == '.' &&
+       req.config.root[1] == '.' && req.config.root[2] == '/')) {
     this->setStatusCode(NOT_FOUND);
     fullPath = "pages/errors/404.html";
   } else {
@@ -949,11 +908,7 @@ void Response::generateResponse(Request &req) {
     fullPath.append(req.path);
   }
 
-//   std::cout << "fullPath=====================> " << fullPath << std::endl;
-
   // * check the file permissions and if the file exist
-  // todo: change the path of error pages by config file and check if we have
-  // todo: the folder
   if (access(fullPath.c_str(), F_OK) == -1 || !this->isFile(fullPath)) {
     this->setStatusCode(NOT_FOUND);
     fullPath = (req.config.root + "/" + req.config.error_page[NOT_FOUND]);
@@ -989,18 +944,6 @@ void Response::generateResponse(Request &req) {
   int fd = open(fullPath.c_str(), O_RDONLY);
   this->setBodyFd(fd);
 
-//   std::cout << "-----------------------path of file------------------------"
-//             << std::endl;
-//   std::cout << fullPath << std::endl;
-//   std::cout << "-----------------------path of file------------------------"
-//             << std::endl;
-
-//   std::cout << "-----------------------Headers------------------------"
-//             << std::endl;
-//   std::cout << getHeaders() << std::endl;
-//   std::cout << "-----------------------Headers------------------------"
-//             << std::endl;
-
   // ! close root path
   rootPath.close();
 }
@@ -1008,16 +951,12 @@ void Response::generateResponse(Request &req) {
 // * Response
 void Response::response(Request &req) {
   if (req.method == GET) {
-    // std::cout << "=======GET=======" << std::endl;
     this->GET_METHOD(req);
   } else if (req.method == POST) {
-    // std::cout << "=======POST=======" << std::endl;
     this->POST_METHOD(req);
   } else if (req.method == DELETE) {
-    // std::cout << "=======DELETE=======" << std::endl;
     this->DELETE_METHOD(req);
   } else {
     this->methodNotAllowed(req);
-    // std::cout << "=======ELSE=======" << std::endl;
   }
 }

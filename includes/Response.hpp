@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:17:46 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/15 11:28:12 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/29 11:01:16 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,8 +62,6 @@ class Response : public Webserv {
 
     bool getIsRedirection() const;
     void setIsRedirection(bool value);
-
-    // void setSession(std::string session_id, std::string value);
 
     void setBodyFd(int &fd);
     int getBodyFd() const;

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:20 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 13:49:18 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/29 09:35:43 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,5 +33,4 @@ class ConnectionManager : Helper, Webserv {
 
 	private:
 		Epoll	_epollInstance;
-		STATUS_CODE _statusCode;
 };

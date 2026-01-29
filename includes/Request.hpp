@@ -39,8 +39,7 @@ class ConfigFile {
     std::string index;
     std::map<int, std::string> error_page;
     std::vector<location> locations;
-    std::vector<std::string> cgi_path;
-    std::vector<std::string> cgi_ext;
+    std::map<std::string, std::string> cgi_conf;
 
     void init_the_header_conf_default();
     void parse_config_file(char *av);

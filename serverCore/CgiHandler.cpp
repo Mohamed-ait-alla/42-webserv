@@ -17,8 +17,14 @@
 char**	CgiHandler::buildArguments(const Request& req)
 {
 	char**	argv = new char*[3];
+	std::string	extention;
+	size_t	pos  = req.cgi.scriptPath.rfind(".");
+	extention = req.cgi.scriptPath.substr(pos);
+	std::map<std::string, std::string>::const_iterator it = req.config.cgi_conf.find(extention);
+	if (it != req.config.cgi_conf.end())
+		argv[0] = strdup(it->second.c_str());
 
-	argv[0] = strdup(req.config.cgi_path[0].c_str());
+
 	argv[1] = strdup(req.cgi.scriptPath.c_str());
 	argv[2] = NULL;
 

@@ -14,6 +14,9 @@ void ConfigFile::init_the_header_conf_default(){
     this->error_page[500] = "errors/500.html";
     this->error_page[503] = "errors/503.html";
     this->error_page[504] = "errors/504.html";
+    this->cgi_conf[".sh"] = "/usr/bin/bash";
+    this->cgi_conf[".py"] = "/usr/bin/python3";
+    this->cgi_conf[".php"] = "/usr/bin/php";
 }
 
 
@@ -179,27 +182,14 @@ void   check_errors_and_init_config_server(std::vector<std::string> &tokens, Con
             }
             else if (!i->compare("location"))
                 parse_location(tokens, i, conf);
-            else if (!i->compare("cgi_path"))
+            else if (!i->compare("cgi_conf"))
             {
                 i++;
-                while (i != tokens.end() && i->compare(";"))
-                {
-                    conf.cgi_path.push_back(*i);
-                    i++;
-                }
-                if (i == tokens.end())
-                    throw std::runtime_error("error syntax (config file cgi_path)");
-            }
-            else if (!i->compare("cgi_ext"))
-            {
+                conf.cgi_conf[*i] = *(i + 1);
                 i++;
-                while (i != tokens.end() && i->compare(";"))
-                {
-                    conf.cgi_ext.push_back(*i);
-                    i++;
-                }
-                if (i == tokens.end())
-                    throw std::runtime_error("error syntax (config file cgi_ext)");
+                i++;
+                if (i->compare(";"))
+                    throw std::runtime_error("error syntax (config file cgi_conf)");
             }
             else
                 throw std::runtime_error("error syntax (config file)");

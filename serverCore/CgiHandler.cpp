@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/30 15:39:00 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/30 16:18:15 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,13 +150,8 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	}
 	close(stdinPipe[1]);
 
-	for (int i = 0; argv[i] != NULL; i++)
-		free(argv[i]);
-	delete[] argv;
-		
-	for (int i = 0; envp && envp[i] != NULL; i++)
-		free(envp[i]);
-	delete[] envp;
+	cleanUpArguments(argv);
+	cleanUpEnvVariables(envp);
 
 	outPid = pid;
 	return (stdoutPipe[0]);
@@ -182,4 +177,23 @@ bool	CgiHandler::checkCgiStatus(pid_t pid, int& exitStatus)
 ssize_t	CgiHandler::readChunk(int pipeFd, char *buffer, size_t size)
 {
 	return (read(pipeFd, buffer, size));
+}
+
+void	CgiHandler::cleanUpArguments(char **argv)
+{
+	if (!argv)
+		return ;
+	for (int i = 0; argv[i] != NULL; i++)
+		free(argv[i]);
+	delete[] argv;
+}
+
+void	CgiHandler::cleanUpEnvVariables(char **envp)
+{
+	if (!envp)
+		return ;
+	
+	for (int i = 0; envp && envp[i] != NULL; i++)
+		free(envp[i]);
+	delete[] envp;
 }

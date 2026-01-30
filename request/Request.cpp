@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/29 22:54:29 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/30 18:32:14 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,6 @@ void Request::setRequest(const std::string &req) {
     firstLine >> this->path >> this->httpV;
 
     // * check http version
-    // if (this->httpV != "HTTP/1.1\r" || this->httpV.empty() || path.empty()) {
     if (this->httpV != "HTTP/1.1") {
       this->method = ELSE; // * return BAD_REQUEST
     }
@@ -107,9 +106,6 @@ void Request::setRequest(const std::string &req) {
     // ! check if request is CGI
     this->checkCGI(this->path);
   }
-
-  std::cout << "==========REQUEST==========\n";
-  std::cout << req;
 
   // * get the headers
   std::string key, value;
@@ -127,17 +123,8 @@ void Request::setRequest(const std::string &req) {
     key = line.substr(0, pos);
     value = line.substr(pos + 2, line.length());
 
-    // std::cout << "+++++++++++++++++++++++++++++\n";
-    // std::cout << "key: " << key << std::endl;
-    // std::cout << "value: " << value << std::endl;
-    // std::cout << "+++++++++++++++++++++++++++++\n";
-
     // * check if key or value is empty
     if (key.empty() || value.empty()) {
-      // std::cout << "----------------------------\n";
-      // std::cout << "key: " << key << std::endl;
-      // std::cout << "value: " << value << std::endl;
-      // std::cout << "----------------------------\n";
       this->method = ELSE; // * return BAD_REQUEST
     }
 
@@ -147,9 +134,11 @@ void Request::setRequest(const std::string &req) {
       size_t posHost;
       posHost = value.find(":");
       if (posHost != std::string::npos) {
-        std::string reqHost = value.substr(0, posHost);
-        if (reqHost != this->config.host) {
-          this->method = ELSE; // * return BAD_REQUEST
+        std::string domainName = value.substr(0, posHost);
+        if (domainName != "localhost") {
+          if (domainName != this->config.host) {
+            this->method = ELSE; // * return BAD_REQUEST
+          }
         }
 
         int reqListen = std::atoi(value.substr(posHost + 1).c_str());
@@ -158,11 +147,6 @@ void Request::setRequest(const std::string &req) {
         if (it == this->config.listen.end()) {
           this->method = ELSE; // * return BAD_REQUEST
         }
-
-        std::cout << "----------------------------\n";
-        std::cout << "reqHost: " << reqHost << std::endl;
-        std::cout << "reqListen: " << reqListen << std::endl;
-        std::cout << "----------------------------\n";
       } else {
         this->method = ELSE; // * return BAD_REQUEST
       }
@@ -174,6 +158,12 @@ void Request::setRequest(const std::string &req) {
     }
 
     this->request[key] = value;
+  }
+
+  // * check if we have host header
+  std::map<std::string, std::string>::iterator it = this->request.find("Host");
+  if (it == this->request.end()) {
+    this->method = ELSE; // * return BAD_REQUEST
   }
 
   // * get the body

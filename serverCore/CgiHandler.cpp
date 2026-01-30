@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/30 16:18:15 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/30 16:42:11 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,6 +122,14 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	setNonBlocking(stdoutPipe[0]);
 		
 	argv = buildArguments(req);
+	if (!argv)
+	{
+		close(stdinPipe[0]);	
+		close(stdinPipe[1]);	
+		close(stdoutPipe[0]);
+		close(stdoutPipe[1]);
+		return (-1);
+	}
 	envp = buildEnvVariables(req);
 	
 	pid_t	pid = fork();

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/30 18:32:14 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/30 19:12:57 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,42 +128,60 @@ void Request::setRequest(const std::string &req) {
       this->method = ELSE; // * return BAD_REQUEST
     }
 
-    // * check host and port
-    if (key == "Host") {
-      // * check host
-      size_t posHost;
-      posHost = value.find(":");
-      if (posHost != std::string::npos) {
-        std::string domainName = value.substr(0, posHost);
-        if (domainName != "localhost") {
-          if (domainName != this->config.host) {
-            this->method = ELSE; // * return BAD_REQUEST
-          }
-        }
-
-        int reqListen = std::atoi(value.substr(posHost + 1).c_str());
-        std::vector<int>::iterator it = std::find(
-            this->config.listen.begin(), this->config.listen.end(), reqListen);
-        if (it == this->config.listen.end()) {
-          this->method = ELSE; // * return BAD_REQUEST
-        }
-      } else {
-        this->method = ELSE; // * return BAD_REQUEST
-      }
-    }
-
-    // * check if client send cookies
-    if (key == "Cookie") {
-      iFoundCookie = true;
-    }
-
     this->request[key] = value;
   }
 
   // * check if we have host header
-  std::map<std::string, std::string>::iterator it = this->request.find("Host");
-  if (it == this->request.end()) {
+  std::map<std::string, std::string>::iterator itHost =
+      this->request.find("Host");
+  if (itHost != this->request.end()) {
+    // * check host and port
+    // * check host
+    size_t posHost;
+
+    std::string hostValue = itHost->second;
+    posHost = hostValue.find(":");
+    if (posHost != std::string::npos) {
+      std::string domainName = hostValue.substr(0, posHost);
+      if (domainName != "localhost") {
+        if (domainName != this->config.host) {
+          this->method = ELSE; // * return BAD_REQUEST
+        }
+      }
+
+      int reqListen = std::atoi(hostValue.substr(posHost + 1).c_str());
+      std::vector<int>::iterator it = std::find(
+          this->config.listen.begin(), this->config.listen.end(), reqListen);
+      if (it == this->config.listen.end()) {
+        this->method = ELSE; // * return BAD_REQUEST
+      }
+    } else {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+  } else {
     this->method = ELSE; // * return BAD_REQUEST
+  }
+
+  // * check the Content-Length in method post
+  if (this->method == POST) {
+    std::map<std::string, std::string>::iterator itContentLength =
+        this->request.find("Content-Length");
+    if (itContentLength != this->request.end()) {
+      int contentLengthValue = std::atoi(itContentLength->second.c_str());
+      if (contentLengthValue < 0) {
+        this->method = ELSE; // * return BAD_REQUEST
+      }
+
+    } else {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+  }
+
+  // * check if client send cookies
+  std::map<std::string, std::string>::iterator itCookie =
+      this->request.find("Cookie");
+  if (itCookie != this->request.end()) {
+    iFoundCookie = true;
   }
 
   // * get the body

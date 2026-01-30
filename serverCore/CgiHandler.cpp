@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/30 16:42:11 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/30 18:03:52 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,10 +124,7 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	argv = buildArguments(req);
 	if (!argv)
 	{
-		close(stdinPipe[0]);	
-		close(stdinPipe[1]);	
-		close(stdoutPipe[0]);
-		close(stdoutPipe[1]);
+		cleanUpPipes(stdinPipe, stdoutPipe);
 		return (-1);
 	}
 	envp = buildEnvVariables(req);
@@ -135,10 +132,7 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	pid_t	pid = fork();
 	if (pid < 0)
 	{
-		close(stdoutPipe[0]);
-		close(stdoutPipe[1]);
-		close(stdinPipe[0]);
-		close(stdinPipe[1]);
+		cleanUpPipes(stdinPipe, stdoutPipe);
 		throwError("fork()");
 	}
 	
@@ -204,4 +198,12 @@ void	CgiHandler::cleanUpEnvVariables(char **envp)
 	for (int i = 0; envp && envp[i] != NULL; i++)
 		free(envp[i]);
 	delete[] envp;
+}
+
+void	CgiHandler::cleanUpPipes(int stdinPipe[2], int stdoutPipe[2])
+{
+	close(stdinPipe[0]);
+	close(stdinPipe[1]);
+	close(stdoutPipe[0]);
+	close(stdoutPipe[1]);
 }

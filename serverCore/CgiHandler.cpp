@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/29 11:47:38 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/30 18:03:52 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,23 +14,35 @@
 #include <wait.h>
 
 
+char*	CgiHandler::getBinaryPath(const Request& req)
+{
+	size_t dotPos = req.cgi.scriptPath.rfind('.');
+	if (dotPos == std::string::npos)
+		return NULL;
+
+	std::string ext = req.cgi.scriptPath.substr(dotPos);
+	std::map<std::string, std::string>::const_iterator it = req.config.cgi_conf.find(ext);
+
+	if (it == req.config.cgi_conf.end())
+		return NULL;
+
+	return strdup(it->second.c_str());
+}
+
+
 char**	CgiHandler::buildArguments(const Request& req)
 {
-	char**	argv = new char*[3];
-	std::string	extention;
-	size_t	pos  = req.cgi.scriptPath.rfind(".");
-	extention = req.cgi.scriptPath.substr(pos);
-	std::map<std::string, std::string>::const_iterator it = req.config.cgi_conf.find(extention);
-	if (it != req.config.cgi_conf.end())
-		argv[0] = strdup(it->second.c_str());
+	char* interpreter = getBinaryPath(req);
+	if (!interpreter)
+		return NULL;
 
-
+	char** argv = new char*[3];
+	argv[0] = interpreter;
 	argv[1] = strdup(req.cgi.scriptPath.c_str());
 	argv[2] = NULL;
 
-	return (argv);
+	return argv;
 }
-
 
 
 char**	CgiHandler::buildEnvVariables(const Request& req)
@@ -110,15 +122,17 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	setNonBlocking(stdoutPipe[0]);
 		
 	argv = buildArguments(req);
+	if (!argv)
+	{
+		cleanUpPipes(stdinPipe, stdoutPipe);
+		return (-1);
+	}
 	envp = buildEnvVariables(req);
 	
 	pid_t	pid = fork();
 	if (pid < 0)
 	{
-		close(stdoutPipe[0]);
-		close(stdoutPipe[1]);
-		close(stdinPipe[0]);
-		close(stdinPipe[1]);
+		cleanUpPipes(stdinPipe, stdoutPipe);
 		throwError("fork()");
 	}
 	
@@ -138,13 +152,8 @@ int	CgiHandler::startCgiScript(const Request& req, pid_t& outPid)
 	}
 	close(stdinPipe[1]);
 
-	for (int i = 0; argv[i] != NULL; i++)
-		free(argv[i]);
-	delete[] argv;
-		
-	for (int i = 0; envp && envp[i] != NULL; i++)
-		free(envp[i]);
-	delete[] envp;
+	cleanUpArguments(argv);
+	cleanUpEnvVariables(envp);
 
 	outPid = pid;
 	return (stdoutPipe[0]);
@@ -170,4 +179,31 @@ bool	CgiHandler::checkCgiStatus(pid_t pid, int& exitStatus)
 ssize_t	CgiHandler::readChunk(int pipeFd, char *buffer, size_t size)
 {
 	return (read(pipeFd, buffer, size));
+}
+
+void	CgiHandler::cleanUpArguments(char **argv)
+{
+	if (!argv)
+		return ;
+	for (int i = 0; argv[i] != NULL; i++)
+		free(argv[i]);
+	delete[] argv;
+}
+
+void	CgiHandler::cleanUpEnvVariables(char **envp)
+{
+	if (!envp)
+		return ;
+	
+	for (int i = 0; envp && envp[i] != NULL; i++)
+		free(envp[i]);
+	delete[] envp;
+}
+
+void	CgiHandler::cleanUpPipes(int stdinPipe[2], int stdoutPipe[2])
+{
+	close(stdinPipe[0]);
+	close(stdinPipe[1]);
+	close(stdoutPipe[0]);
+	close(stdoutPipe[1]);
 }

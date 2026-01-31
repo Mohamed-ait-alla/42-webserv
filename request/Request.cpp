@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/29 11:13:50 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/30 19:12:57 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,15 @@ void Request::setRequest(const std::string &req) {
   // ! check if the request is not empty if not we need to clear the old data
   if (!this->request.empty()) {
     this->request.clear();
+  }
+
+  // ! check if the (path, httpV) is not empty if not we need to clear
+  // ! the old data
+  if (!this->path.empty()) {
+    this->path.clear();
+  }
+  if (!this->httpV.empty()) {
+    this->httpV.clear();
   }
 
   // ! check if the cgi is not empty if not we need to clear the old data
@@ -89,6 +98,11 @@ void Request::setRequest(const std::string &req) {
 
     firstLine >> this->path >> this->httpV;
 
+    // * check http version
+    if (this->httpV != "HTTP/1.1") {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+
     // ! check if request is CGI
     this->checkCGI(this->path);
   }
@@ -98,19 +112,76 @@ void Request::setRequest(const std::string &req) {
   size_t pos;
   while (std::getline(ss, line)) {
     pos = line.find(":");
+
     if (pos == std::string::npos) {
+      if (line != "\r") {
+        this->method = ELSE;
+      }
       break;
     }
 
     key = line.substr(0, pos);
     value = line.substr(pos + 2, line.length());
 
-    // * check if client send cookies
-    if (key == "Cookie") {
-      iFoundCookie = true;
+    // * check if key or value is empty
+    if (key.empty() || value.empty()) {
+      this->method = ELSE; // * return BAD_REQUEST
     }
 
     this->request[key] = value;
+  }
+
+  // * check if we have host header
+  std::map<std::string, std::string>::iterator itHost =
+      this->request.find("Host");
+  if (itHost != this->request.end()) {
+    // * check host and port
+    // * check host
+    size_t posHost;
+
+    std::string hostValue = itHost->second;
+    posHost = hostValue.find(":");
+    if (posHost != std::string::npos) {
+      std::string domainName = hostValue.substr(0, posHost);
+      if (domainName != "localhost") {
+        if (domainName != this->config.host) {
+          this->method = ELSE; // * return BAD_REQUEST
+        }
+      }
+
+      int reqListen = std::atoi(hostValue.substr(posHost + 1).c_str());
+      std::vector<int>::iterator it = std::find(
+          this->config.listen.begin(), this->config.listen.end(), reqListen);
+      if (it == this->config.listen.end()) {
+        this->method = ELSE; // * return BAD_REQUEST
+      }
+    } else {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+  } else {
+    this->method = ELSE; // * return BAD_REQUEST
+  }
+
+  // * check the Content-Length in method post
+  if (this->method == POST) {
+    std::map<std::string, std::string>::iterator itContentLength =
+        this->request.find("Content-Length");
+    if (itContentLength != this->request.end()) {
+      int contentLengthValue = std::atoi(itContentLength->second.c_str());
+      if (contentLengthValue < 0) {
+        this->method = ELSE; // * return BAD_REQUEST
+      }
+
+    } else {
+      this->method = ELSE; // * return BAD_REQUEST
+    }
+  }
+
+  // * check if client send cookies
+  std::map<std::string, std::string>::iterator itCookie =
+      this->request.find("Cookie");
+  if (itCookie != this->request.end()) {
+    iFoundCookie = true;
   }
 
   // * get the body
@@ -126,7 +197,7 @@ void Request::setRequest(const std::string &req) {
     this->request[key] = value;
   }
 
-  // * CORRECT
+  // * Parse Body
 
   std::string contentType =
       this->request.count("Content-Type") ? this->request["Content-Type"] : "";

@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/29 11:01:24 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/01/29 21:15:22 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -873,10 +873,10 @@ bool Response::isUserInSession(const Request &req, std::string session_id) {
 // * Method Not Allowed
 void Response::methodNotAllowed(Request &req) {
   // * set status code
-  this->setStatusCode(METHOD_NOT_ALLOWED);
+  this->setStatusCode(BAD_REQUEST);
 
   // * full path
-  req.path = req.config.error_page[METHOD_NOT_ALLOWED];
+  req.path = req.config.error_page[BAD_REQUEST];
 
   // * Generate response
   this->generateResponse(req);

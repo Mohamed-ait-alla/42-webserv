@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:08 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 12:58:43 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 10:06:41 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ class Client : public Webserv {
 		time_t					getCgiStartTime() const;
 		void					setCgiTimedOut(bool val);
 		bool					isCgiTimedOut() const;
+		size_t					getCgiBytesSent() const;
+		void					setCgiBytesSent(size_t val);
 
 	private:
 		std::string				_request;
@@ -78,5 +80,6 @@ class Client : public Webserv {
 		bool					_isCgiTimedOut;
 		std::string				_cgiOutput;
 		time_t					_cgiStartTime;
+		size_t					_cgiBytesSent;
 
 };

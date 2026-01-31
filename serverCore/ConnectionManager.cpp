@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 17:03:01 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 10:54:39 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,9 +85,6 @@ bool ConnectionManager::receiveData(int clientFd, std::map<int, Client>& clients
 	if (!client.hasCompleteBody())
 		return (false);
 
-	// std::cout << "=== Request received ===\n";
-	// std::cout << client.getRequest() << std::endl;
-
 	return (true);
 }
 
@@ -96,20 +93,29 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, s
 	if (req.getIsCGI())
 	{
 		Client&	client = clients[clientFd];
+		const std::string&	cgiResp = req.getCgiResponse();
+		size_t	remainingBytes = cgiResp.size() - client.getCgiBytesSent();
 
-		ssize_t bytesSent = send(clientFd, req.getCgiResponse().c_str(), req.getCgiResponse().size(), 0);
+		ssize_t bytesSent = send(clientFd, cgiResp.c_str() + client.getCgiBytesSent(), remainingBytes, 0);
 		if (bytesSent <= 0)
 		{
 			closeConnection(clientFd, clients, cgiPipeToClient, "failed to send cgi response");
 			return (true);
 		}
-		logMessage(LOG_RESP,
-			"   fd=" + toString(clientFd) + " " +
-			toString(client.getStatusCode()) + " " +
-			statusCodeToString(client.getStatusCode()));
+		client.setCgiBytesSent(bytesSent);
+		if (client.getCgiBytesSent() == cgiResp.size())
+		{
+			logMessage(LOG_RESP,
+				"   fd=" + toString(clientFd) + " " +
+				toString(client.getStatusCode()) + " " +
+				statusCodeToString(client.getStatusCode()));
+			closeConnection(clientFd, clients, cgiPipeToClient, "cgi response sent");
+			return (true);	
+		}
 
-		closeConnection(clientFd, clients, cgiPipeToClient, "cgi response sent");
-		return (true);
+		_epollInstance.modFd(clientFd, EPOLLOUT);
+		client.updateLastActivity();
+		return (false);
 	}
 	else
 	{
@@ -120,7 +126,7 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, s
 		{
 				res.response(req);
 				std::string responseHeaders = res.getHeaders();
-				// std::cout << "--->status code: " << res.getStatusCode() << std::endl;
+
 				size_t headersLength = responseHeaders.length();
 				ssize_t bytesSent;
 		

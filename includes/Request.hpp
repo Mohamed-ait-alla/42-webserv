@@ -41,7 +41,6 @@ class ConfigFile {
     std::vector<location> locations;
     std::map<std::string, std::string> cgi_conf;
 
-    void init_the_header_conf_default();
     void parse_config_file(char *av);
 };
 

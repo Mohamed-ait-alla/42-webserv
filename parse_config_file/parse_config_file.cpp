@@ -1,24 +1,5 @@
 #include "../includes/Request.hpp"
 
-void ConfigFile::init_the_header_conf_default(){
-    this->listen.push_back(8080);
-    this->server_name = "webserv/1.0";
-    this->host = "127.0.0.1";
-    this->root = "www";
-    this->client_max_body_size = 1024;
-    this->index = "index.html";
-    this->error_page[403] = "errors/403.html";
-    this->error_page[404] = "errors/404.html";
-    this->error_page[405] = "errors/405.html";
-    this->error_page[413] = "errors/413.html";
-    this->error_page[500] = "errors/500.html";
-    this->error_page[503] = "errors/503.html";
-    this->error_page[504] = "errors/504.html";
-    this->cgi_conf[".sh"] = "/usr/bin/bash";
-    this->cgi_conf[".py"] = "/usr/bin/python3";
-    this->cgi_conf[".php"] = "/usr/bin/php";
-}
-
 
 void   parse_location(std::vector<std::string> &tokens, std::vector<std::string>::iterator &i, ConfigFile &conf){
     location location_to_push;

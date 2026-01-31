@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 05:51:49 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/31 10:37:27 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 10:54:39 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,6 +114,7 @@ bool ConnectionManager::sendData(int clientFd, std::map<int, Client>& clients, s
 		}
 
 		_epollInstance.modFd(clientFd, EPOLLOUT);
+		client.updateLastActivity();
 		return (false);
 	}
 	else

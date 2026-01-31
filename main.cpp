@@ -17,11 +17,15 @@ int main(int ac, char **av) {
   try {
     Request request;
     Server server;
-    request.config.init_the_header_conf_default();
     if (ac > 2)
       throw std::runtime_error("./program [config file]");
     else if (ac == 2)
       request.config.parse_config_file(av[1]);
+    else
+    {
+      char file[] = "config/default.conf";
+      request.config.parse_config_file(file);
+    }
 	// Server server(request.config.host, request.config.listen[0]);
     server.run(request);
   } catch (const std::exception &e) {

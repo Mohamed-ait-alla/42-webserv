@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:27 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 12:57:09 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 10:26:10 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ Client::Client(int clientFd)
 	  _cgiPid(-1),
 	  _isCgiRunning(false),
 	  _isCgiTimedOut(false),
-	  _cgiStartTime(-1)
+	  _cgiStartTime(-1),
+	  _cgiBytesSent(0)
 {
 }
 
@@ -104,6 +105,11 @@ void	Client::setCgiTimedOut(bool val)
 	_isCgiTimedOut = val;
 }
 
+void	Client::setCgiBytesSent(size_t val)
+{
+	_cgiBytesSent += val;
+}
+
 // getters
 
 const std::string&	Client::getRequest() const
@@ -169,6 +175,11 @@ time_t	Client::getCgiStartTime() const
 bool	Client::isCgiTimedOut() const
 {
 	return (_isCgiTimedOut);
+}
+
+size_t	Client::getCgiBytesSent() const
+{
+	return (_cgiBytesSent);
 }
 
 

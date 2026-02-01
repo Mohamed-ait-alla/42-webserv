@@ -41,7 +41,15 @@ echo "\r\n"; // IMPORTANT: end of headers
   <pre>
 <?php
 foreach ($_SERVER as $key => $value) {
-    echo htmlspecialchars($key . "=" . $value) . "\n";
+    echo htmlspecialchars($key) . " = ";
+
+    if (is_array($value)) {
+        echo htmlspecialchars(print_r($value, true));
+    } else {
+        echo htmlspecialchars($value);
+    }
+
+    echo "\n";
 }
 ?>
   </pre>

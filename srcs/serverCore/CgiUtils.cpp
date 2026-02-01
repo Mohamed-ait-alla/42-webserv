@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 11:04:26 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/26 11:30:18 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 20:30:15 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,11 +66,11 @@ std::string	loadErrorPage(int statusCode)
 	std::string	path;
 	
 	if (statusCode == 500)
-		path = "./pages/errors/500.html";
+		path = "./srcs/pages/errors/500.html";
 	else if (statusCode == 504)
-		path = "./pages/errors/504.html";
+		path = "./srcs/pages/errors/504.html";
 	else
-		path = "./pages/503.html";
+		path = "./srcs/pages/errors/503.html";
 
 	return (Helper::readFile(path));
 }

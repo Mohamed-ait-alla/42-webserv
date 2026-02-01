@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:49:39 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/31 13:30:30 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/01 10:52:16 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ char**	CgiHandler::buildEnvVariables(const Request& req)
 	envVect.push_back("SCRIPT_NAME=" + req.cgi.scriptPath);
 	envVect.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	envVect.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	envVect.push_back("SERVER_SOFTWARE=500_Service_Unavailable/1.0");
+	envVect.push_back("SERVER_SOFTWARE=webserv/1.0");
 	envVect.push_back("SERVER_NAME=" + req.cgi.host);
 	envVect.push_back("SERVER_PORT=" + req.cgi.port);
 
@@ -164,7 +164,7 @@ bool	CgiHandler::checkCgiStatus(pid_t pid, int& exitStatus)
 	int	status;
 
 	pid_t	result = waitpid(pid, &status, WNOHANG);
-	
+
 	if (result == 0)
 		return (false);
 	else if (result > 0)

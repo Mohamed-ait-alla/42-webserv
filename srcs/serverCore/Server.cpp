@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/31 09:48:23 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/01 10:54:46 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,10 +154,11 @@ void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 		return;
 
 	char buffer[MAX_BUFFER_SIZE];
-	ssize_t bytesRead = _cgiHandler.readChunk(pipeFd, buffer, sizeof(buffer));
+	ssize_t bytesRead = _cgiHandler.readChunk(pipeFd, buffer, sizeof(buffer) - 1);
 
 	if (bytesRead > 0)
 	{
+		buffer[bytesRead] = '\0';
 		client.appendCgiOutput(std::string(buffer, bytesRead));
 		return;
 	}
@@ -166,7 +167,7 @@ void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 	_epoll.delFd(pipeFd, "CGI finished or failed");
 	close(pipeFd);
 
-	int exitStatus;
+	int exitStatus = 0;
 	_cgiHandler.checkCgiStatus(client.getCgiPid(), exitStatus);
 
 	Request& req = _clientRequests[clientFd];

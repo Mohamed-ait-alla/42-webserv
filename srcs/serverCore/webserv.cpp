@@ -6,11 +6,11 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/31 13:13:15 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/28 11:53:49 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/01/31 20:25:31 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./includes/Webserv.hpp"
+#include "../includes/Webserv.hpp"
 
 std::string Webserv::statusCodeToString(STATUS_CODE code)
 {

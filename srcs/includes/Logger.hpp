@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/28 09:39:18 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 14:49:08 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/01 13:09:04 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,9 +36,9 @@ enum LogTag {
     LOG_ERROR
 };
 
-// extern	LogLevel g_logLevel;
+extern	bool debug_mode;
 
-void				logMessage(LogTag tag, const std::string& msg);
+void		logMessage(LogTag tag, const std::string& msg);
 const char*	tagToStr(LogTag tag);
 const char*	tagToColor(LogTag tag);
 

@@ -6,11 +6,13 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/28 09:39:31 by mait-all          #+#    #+#             */
-/*   Updated: 2026/01/28 14:50:28 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/01 13:15:58 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Logger.hpp"
+
+bool debug_mode = false;
 
 const char*	tagToStr(LogTag tag)
 {
@@ -44,9 +46,9 @@ const char*	tagToColor(LogTag tag)
 
 void	logMessage(LogTag tag, const std::string& msg)
 {
-	// if (level > g_logLevel)
-	// 	return ;
-	
+	if (!debug_mode && tag != LOG_INFO)
+		return ;
+
 	std::cout
 		<< tagToColor(tag)
 		<< "[" << tagToStr(tag) << "] "

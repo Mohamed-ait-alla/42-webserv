@@ -4,12 +4,7 @@
 void   parse_location(std::vector<std::string> &tokens, std::vector<std::string>::iterator &i, ConfigFile &conf){
     location location_to_push;
     location_to_push.autoindex = false;
-    // struct stat fileStat;
     i++;
-    // if (stat(conf.root.substr(0, conf.root.size() - 1).append(*i).c_str(), &fileStat) == -1)
-    //     throw std::runtime_error("error syntax (config file stat)");
-    // if (S_ISREG(fileStat.st_mode))
-    //     throw std::runtime_error("error syntax (config file location path is not a dir)");
     location_to_push.path = *i;
     i++;
     if (i->compare("{"))
@@ -201,11 +196,6 @@ void    ConfigFile::parse_config_file(char *av)
         file.append(line);
         line.clear();
     }
-    // for (size_t i = 0; i < file.size(); i++)
-    // {
-    //     if (file[i] >= 65 && file[i] <= 90)
-    //         throw std::runtime_error("we work with lower case only (config file)");
-    // }
     size_t end = 0;
     size_t start;
     while (end < file.size())

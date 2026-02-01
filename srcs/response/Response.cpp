@@ -6,7 +6,7 @@
 /*   By: mdahani <mdahani@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/01/31 10:25:52 by mdahani          ###   ########.fr       */
+/*   Updated: 2026/02/01 15:08:27 by mdahani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -893,7 +893,7 @@ void Response::generateResponse(Request &req) {
       (!req.config.root.empty() && req.config.root[0] == '.' &&
        req.config.root[1] == '.' && req.config.root[2] == '/')) {
     this->setStatusCode(NOT_FOUND);
-    fullPath = "pages/errors/404.html";
+    fullPath = "srcs/pages/errors/404.html";
   } else {
     // * handle slash after root path
     // * we add slash only in path /
@@ -915,7 +915,7 @@ void Response::generateResponse(Request &req) {
     // * check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
-      fullPath = "pages/errors/404.html";
+      fullPath = "srcs/pages/errors/404.html";
     }
   } else if (access(fullPath.c_str(), R_OK) == -1 ||
              access(fullPath.c_str(), W_OK) == -1) {
@@ -924,7 +924,7 @@ void Response::generateResponse(Request &req) {
     // * check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
-      fullPath = "pages/errors/403.html";
+      fullPath = "srcs/pages/errors/403.html";
     }
   }
 

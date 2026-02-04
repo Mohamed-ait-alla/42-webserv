@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 11:04:26 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 16:43:51 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/04 18:11:05 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,16 +61,38 @@ std::map<std::string, std::string>	parseCgiHeaders(const std::string& rawHeaders
     return headers;
 }
 
+std::string	getErrorPagePath(int statusCode)
+{
+	std::string	customizedErrorPage;
+
+	if (statusCode == 500)
+	{
+		customizedErrorPage = "www/errors/500.html";
+		if (access(customizedErrorPage.c_str(), R_OK) == 0)
+			return (customizedErrorPage);
+		return ("defaults/errors/500.html");
+	}
+	if (statusCode == 504)
+	{
+		customizedErrorPage = "www/errors/504.html";
+		if (access(customizedErrorPage.c_str(), R_OK) == 0)
+			return (customizedErrorPage);
+		return ("defaults/errors/504.html");
+	}
+
+	return ("");
+}
+
 std::string	loadErrorPage(int statusCode)
 {
 	std::string	path;
 	
 	if (statusCode == 500)
-		path = "./defaults/errors/500.html";
+		path = getErrorPagePath(statusCode);
 	else if (statusCode == 504)
-		path = "./defaults/errors/504.html";
+		path = getErrorPagePath(statusCode);
 	else
-		path = "./defaults/errors/503.html";
+		path = "defaults/errors/503.html";
 
 	return (Helper::readFile(path));
 }

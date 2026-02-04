@@ -2,21 +2,21 @@ CXX = c++
 CXXFLAGS =  -Wall -Wextra -Werror -std=c++98
 NAME = webserv
 
-SRCS = 	./srcs/main.cpp \
-		./srcs/serverCore/Logger.cpp \
-		./srcs/serverCore/Helper.cpp \
-		./srcs/serverCore/ConnectionManager.cpp \
-		./srcs/serverCore/Epoll.cpp \
-		./srcs/serverCore/Listener.cpp \
-		./srcs/serverCore/Client.cpp \
-		./srcs/serverCore/Server.cpp \
-		./srcs/serverCore/CgiHandler.cpp \
-		./srcs/serverCore/CgiUtils.cpp \
-		./srcs/request/Request.cpp \
-		./srcs/parse_config_file/parse_config_file.cpp \
-		./srcs/response/Response.cpp \
-		./srcs/response/initMimeTypes.cpp \
-		./srcs/serverCore/webserv.cpp
+SRCS = 	./src/main.cpp \
+		./src/webserv.cpp \
+		./src/configParser/configParser.cpp \
+		./src/server/Listener.cpp \
+		./src/server/Epoll.cpp \
+		./src/server/ConnectionManager.cpp \
+		./src/server/Server.cpp \
+		./src/Client.cpp \
+		./src/cgi/CgiHandler.cpp \
+		./src/cgi/CgiUtils.cpp \
+		./src/http/Request.cpp \
+		./src/http/Response.cpp \
+		./src/http/initMimeTypes.cpp \
+		./src/utils/Logger.cpp \
+		./src/utils/Helper.cpp
 
 
 OBJS = $(SRCS:.cpp=.o)

@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/23 16:52:42 by mdahani           #+#    #+#             */
-/*   Updated: 2026/02/04 09:31:00 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/05 14:53:21 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ int	main(int ac, char **av) {
 			char file[] = "config/default.conf";
 			request.config.parse_config_file(file);
 			if (ac == 2)
-			request.config.parse_config_file(av[1]);
+				request.config.parse_config_file(av[1]);
 		}
 		else
 			throw std::runtime_error("./program [config file]");

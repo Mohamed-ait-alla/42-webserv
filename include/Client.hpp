@@ -6,14 +6,14 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:08 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 09:33:41 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/20 15:55:44 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "server/Epoll.hpp"
-#define CLIENT_TIMEOUT 10
+#define CLIENT_TIMEOUT 30
 
 class Client : public Webserv {
 

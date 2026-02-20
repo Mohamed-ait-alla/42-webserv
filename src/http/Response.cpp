@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/02/04 15:27:24 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/19 17:20:50 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -394,7 +394,7 @@ void Response::POST_METHOD(Request &req) {
             "    >\n"
             "\n"
             "      <h1 class=\"text-xl font-bold text-white text-center\">\n"
-            "        POST Request File Uploaded Successfully ✅\n"
+            "        File Uploaded Successfully ✅\n"
             "      </h1>\n"
             "    </div>\n"
             "  </body>\n"

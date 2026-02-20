@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/24 20:48:07 by mdahani           #+#    #+#             */
-/*   Updated: 2026/02/04 09:25:13 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/19 11:59:42 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,7 @@ void Request::setRequest(const std::string &req) {
     firstLine >> this->path >> this->httpV;
 
     // * check http version
-    if (this->httpV != "HTTP/1.1") {
+    if (this->httpV != "HTTP/1.0" && this->httpV != "HTTP/1.1") {
       this->method = ELSE; // * return BAD_REQUEST
     }
 

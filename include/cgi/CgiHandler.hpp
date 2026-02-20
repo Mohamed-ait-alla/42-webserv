@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:43:47 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/20 15:56:03 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/20 15:59:47 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include "CgiUtils.hpp"
 
-#define CGI_TIMEOUT 30
+#define CGI_TIMEOUT 20
 
 
 class CgiHandler : public Helper {

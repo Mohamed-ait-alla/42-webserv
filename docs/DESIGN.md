@@ -50,3 +50,104 @@ void checkClientTimeOut();     // Remove stale connections
 <br>
 
 ---
+
+
+### 2. Listener (Socket Manager)
+
+**File:** `src/server/Listener.cpp`
+
+**Responsibilities:**
+- Create and bind server sockets
+- Set socket options (SO_REUSEADDR, non-blocking)
+- Listen for connections
+- Track server file descriptors
+
+**Socket Setup:**
+```cpp
+1. socket()              // Create socket
+2. setsockopt()          // SO_REUSEADDR
+3. bind()                // Bind to port
+4. listen()              // Start listening
+5. fcntl(O_NONBLOCK)     // Non-blocking mode
+```
+
+---
+
+### 3. Epoll (I/O Multiplexer)
+
+**File:** `src/server/Epoll.cpp`
+
+**Responsibilities:**
+- Monitor multiple file descriptors
+- Notify when I/O is ready
+- Efficient event-driven architecture
+
+**Key Operations:**
+```cpp
+epoll_create()          // Create epoll instance
+epoll_ctl(ADD)           // Add fd to monitor
+epoll_ctl(MOD)           // Modify events
+epoll_ctl(DEL)           // Remove fd
+epoll_wait()             // Wait for events
+```
+
+**Why Epoll?**
+- ✅ O(1) performance (vs O(n) for select/poll)
+- ✅ Handles 10,000+ connections
+- ✅ Edge-triggered and level-triggered modes
+- ✅ Linux standard for high-performance servers
+
+---
+
+### 4. Connection Manager
+
+**File:** `src/server/ConnectionManager.cpp`
+
+**Responsibilities:**
+- Accept new connections
+- Read data from clients (recv)
+- Write data to clients (send)
+- Close connections
+- Handle partial I/O
+
+**Connection Lifecycle:**
+<br>
+<img src="../assets/client-connection-lifecycle.svg" alt="Connection Lifecycle">
+<br>
+
+---
+
+
+### 5. Client State Machine
+
+**File:** `src/Client.cpp`
+
+**Responsibilities:**
+- Store per-client state
+- Buffer incomplete requests
+- Track CGI execution
+- Manage response state
+
+**Client Data:**
+```cpp
+class Client {
+    std::string _request;          // Buffered request
+	size_t		_bytesReceived;    // Track bytes received
+	size_t		_contentLength;    // Get content length if it's post request
+	time_t		_lastActivity;     // For timeouts
+	bool		_isPostRequest;    // Is it Post Request?
+    bool        _requestComplete;  // Request fully received?
+	bool		_isHeaderSent;     // Does header part sent?
+	bool		_isTimedOut;       // Does client timed out?
+	int			_clientFd;         // Client socket fd
+	int			_bodyFd;           // Body fd
+
+    int         _cgiPipeFd;        // CGI output pipe
+    pid_t       _cgiPid;           // CGI process ID
+    bool        _isCgiRunning;     // CGI in progress?
+    bool        _isCgiTimedOut;    // Does CGI timed out?
+    std::string	_cgiOutput;        // Buffered CGI output
+	time_t		_cgiStartTime;     // For CGI timeouts
+	size_t		_cgiBytesSent;     // Tracking CGI bytes sent
+};
+```

@@ -151,3 +151,62 @@ class Client {
 	size_t		_cgiBytesSent;     // Tracking CGI bytes sent
 };
 ```
+
+---
+
+### 6. HTTP Request Parser
+
+**File:** `src/http/Request.cpp`
+
+**Responsibilities:**
+- Parse HTTP request line
+- Parse headers
+- Extract body
+- Validate syntax
+
+---
+
+### 7. HTTP Response Builder
+
+**File:** `src/http/Response.cpp`
+
+**Responsibilities:**
+- Build HTTP response
+- Set status codes
+- Add headers
+- Handle static files
+
+---
+
+### 8. CGI Handler
+
+**File:** `src/cgi/CgiHandler.cpp`
+
+**Responsibilities:**
+- Fork child process
+- Setup environment variables
+- Create pipes for I/O
+- Execute CGI script
+- Read output
+
+**CGI Execution Flow:**
+<br>
+<img src="../assets/cgi-workflow.svg" alt="CGI Workflow">
+<br>
+
+
+**Non-Blocking CGI:**
+```
+Why non-blocking?
+- CGI script might take seconds to run
+- Can't block the entire server
+- Need to serve other clients meanwhile
+
+Solution:
+1. Fork CGI, add pipe to epoll
+2. Continue serving other clients
+3. When pipe has data, read it
+4. When complete, send response
+```
+
+---

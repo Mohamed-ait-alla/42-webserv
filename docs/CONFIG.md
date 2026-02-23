@@ -392,3 +392,8 @@ location / {
 3. Is script has a valid syntax?
 
 ---
+
+
+## See Also
+- [API Reference](API.md) - HTTP API documentation
+- [Webserv Architecture](DESIGN.md) - Webserv Architecture

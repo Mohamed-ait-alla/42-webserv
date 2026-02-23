@@ -84,7 +84,7 @@ void checkClientTimeOut();     // Remove stale connections
 
 **Key Operations:**
 ```cpp
-epoll_create()          // Create epoll instance
+epoll_create()           // Create epoll instance
 epoll_ctl(ADD)           // Add fd to monitor
 epoll_ctl(MOD)           // Modify events
 epoll_ctl(DEL)           // Remove fd
@@ -210,3 +210,138 @@ Solution:
 ```
 
 ---
+
+## Data Flow
+
+
+### Complete Request/Response Cycle
+
+<br>
+<img src="../assets/complete-lifecycle.svg" alt="Complete Request/Response Cycle">
+<br>
+
+---
+
+## Key Design Decisions
+
+### 1. Single-Threaded vs Multi-Threaded
+
+**Decision:** Single-threaded event loop
+
+**Rationale:**
+- I/O-bound workload (not CPU-bound)
+- No synchronization overhead
+- Simpler code, fewer bugs
+- Scales well with epoll
+- Nginx uses same approach
+
+---
+
+### 2. epoll vs select/poll
+
+**Decision:** Use epoll
+
+**Rationale:**
+- O(1) performance
+- No fd_set size limits
+- Efficient for 1000+ connections
+- Linux standard
+
+---
+
+### 3. Non-Blocking I/O
+
+**Decision:** All sockets are non-blocking
+
+**Rationale:**
+- Prevents one slow client blocking others
+- Predictable latency
+- Enables concurrent handling
+
+---
+
+### 5. Configuration Format
+
+**Decision:** nginx-inspired syntax
+
+**Rationale:**
+- Familiar to sysadmins
+- Hierarchical (server blocks, locations)
+- Human-readable
+
+---
+
+## Security Architecture
+
+### Input Validation
+
+- Validate HTTP method
+- Check URI for path traversal (`..`)
+- Enforce body size limits
+- Sanitize headers
+
+### Resource Limits
+
+- Maximum connections
+- Request timeout
+- CGI execution timeout
+- Upload size limits
+
+### File Access Control
+
+- Restrict to document root
+- Check file permissions
+
+---
+
+
+## Error Handling Philosophy
+
+1. **Never crash** - All errors caught and handled
+2. **Fail gracefully** - Return error page, don't hang
+3. **Log errors** - Help debugging
+4. **Clean up** - No resource leaks
+
+**Error categories:**
+- Socket errors → close connection
+- Parse errors → 400 Bad Request
+- File errors → 404/403
+- CGI errors → 500/504
+
+---
+
+
+## Testing Approach
+
+The system is designed to be testable:
+
+- **Unit testable:** Each component has clear interface
+- **Integration testable:** Can test request/response cycle
+- **Load testable:** Can measure performance under load
+
+---
+
+## Performance Design
+
+The architecture prioritizes:
+
+1. **Low latency** - Non-blocking I/O, efficient event loop
+2. **High throughput** - Can serve many clients concurrently
+3. **Resource efficiency** - Single thread, minimal memory
+
+---
+
+## References
+
+- [The C10K Problem](http://www.kegel.com/c10k.html) - Scalability challenges
+- [nginx Architecture](https://www.aosabook.org/en/nginx.html) - Design inspiration
+- [RFC 1945](https://datatracker.ietf.org/doc/html/rfc1945) - HTTP/1.0 Specification
+- [RFC 3875](https://tools.ietf.org/html/rfc3875) - CGI/1.1 Specification
+- [epoll(7)](https://man7.org/linux/man-pages/man7/epoll.7.html) - Linux epoll API
+
+---
+
+## See Also
+
+- [API Reference](API.md) - HTTP API documentation
+- [Configuration Guide](CONFIG.md) - How to configure the server

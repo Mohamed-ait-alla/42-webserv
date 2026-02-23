@@ -368,3 +368,8 @@ ab -n 1000 -c 100 http://localhost:8080/
 # Using siege
 siege -c 100 -r 10 http://localhost:8080/
 ```
+
+
+## See Also
+- [Configuration Guide](CONFIG.md) - How to configure the server
+- [Webserv Architecture](DESIGN.md) - Webserv Architecture

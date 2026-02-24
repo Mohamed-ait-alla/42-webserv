@@ -9,7 +9,7 @@
 
 **A high-performance HTTP/1.0 web server built with C++98**
 
-[Features](#✨-features) • [Installation](#🚀-installation) • [Usage](#💻-usage) • [Documentation](#📚-documentation) • [Contributing](#🤝-contributing)
+[Features](#features) • [Installation](#🚀-installation) • [Usage](#💻-usage) • [Documentation](#📚-documentation) • [Contributing](#🤝-contributing)
 
 </div>
 

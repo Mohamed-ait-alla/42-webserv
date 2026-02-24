@@ -9,7 +9,7 @@
 
 **A high-performance HTTP/1.0 web server built with C++98**
 
-[Features](#features) • [Installation](#🚀-installation) • [Usage](#💻-usage) • [Documentation](#📚-documentation) • [Contributing](#🤝-contributing)
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Documentation](#documentation) • [Contributing](#contributing)
 
 </div>
 
@@ -17,28 +17,28 @@
 
 ## 📋 Table of Contents
 
-- [About](#🌟-about)
-- [Features](#✨-features)
-- [Architecture](#🏗️-architecture)
-- [Project Structure](#📁-project-structure)
-- [Prerequisites](#📦-prerequisites)
-- [Installation](#🚀-installation)
-- [Usage](#💻-usage)
+- [About](#about)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
   - [Basic Usage](#basic-usage)
   - [Configuration](#configuration)
   - [Examples](#examples)
-- [Documentation](#📚-documentation)
-- [Testing](#🧪-testing)
-- [Performance](#📊-performance)
-- [Contributing](#🤝-contributing)
-- [Authors](#👥-authors)
-- [License](#📄-license)
+- [Documentation](#documentation)
+- [Testing](#testing)
+- [Performance](#performance)
+- [Contributing](#contributing)
+- [Authors](#authors)
+- [License](#license)
 - [Resources](#resources)
-- [Project Stats](#📈-project-stats)
+- [Project Stats](#project-stats)
 
 ---
 
-## 🌟 About
+## About
 
 **Webserv** is a lightweight, non-blocking HTTP/1.0 web server written in C++98. Inspired by nginx's architecture, it uses an event-driven model with epoll to efficiently handle thousands of concurrent connections.
 
@@ -51,7 +51,7 @@ This project was developed as part of the 42 School curriculum, demonstrating ad
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Functionality
 
@@ -94,7 +94,7 @@ This project was developed as part of the 42 School curriculum, demonstrating ad
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Webserv uses a reactor pattern with epoll for I/O multiplexing:
 ```bash
@@ -133,7 +133,7 @@ For detailed architecture information, see [DESIGN.md](docs/DESIGN.md).
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```bash
 webserv/
 ├── assets/                     # Project assets
@@ -205,7 +205,7 @@ webserv/
 
 ---
 
-## 📦 Prerequisites
+## Prerequisites
 
 ### Required
 
@@ -222,7 +222,7 @@ webserv/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -239,7 +239,7 @@ This creates the `webserv` executable.
 
 ---
 
-## 💻 Usage
+## Usage
 
 ### Basic Usage
 ```bash
@@ -319,7 +319,7 @@ curl -X POST http://localhost:8080/cgi-bin/test_post.py \
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 Complete documentation is available in the `docs/` directory.
 
@@ -331,7 +331,7 @@ Complete documentation is available in the `docs/` directory.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Run Basic Tests
 ```bash
@@ -365,7 +365,7 @@ valgrind --leak-check=full --show-leak-kinds=all \
 
 ---
 
-## 📊 Performance
+## Performance
 
 ### Benchmarks
 
@@ -380,7 +380,7 @@ Tested on Ubuntu 22.04, Intel i7-9700K @ 3.6GHz, 16GB RAM
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Here's how you can help:
 
@@ -420,7 +420,7 @@ We welcome contributions! Here's how you can help:
 
 ---
 
-## 👥 Authors
+## Authors
 
 <table>
   <tr>
@@ -456,7 +456,7 @@ We welcome contributions! Here's how you can help:
 
 ---
 
-## 📄 License
+## License
 
 This project was developed as part of the 42 Common Core curriculum at 1337 School for educational purposes.
 
@@ -481,7 +481,7 @@ This project was developed as part of the 42 Common Core curriculum at 1337 Scho
 
 ---
 
-## 📈 Project Stats
+## Project Stats
 
 ![GitHub stars](https://img.shields.io/github/stars/Mohamed-ait-alla/42-webserv?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/Mohamed-ait-alla/42-webserv?style=social)

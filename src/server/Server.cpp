@@ -6,13 +6,16 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 12:58:19 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 15:43:28 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/24 22:13:04 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server/Server.hpp"
 
-// Default constructor
+/**
+ * @brief Default constructor for the Server class.
+ *
+ */
 Server::Server()
 	: _listener(),
 	  _epoll(),
@@ -20,6 +23,13 @@ Server::Server()
 {
 }
 
+/**
+ * @brief Destructor for the Server class.
+ *
+ * Closes all server listening sockets managed by the Listener.
+ * This ensures proper release of file descriptors and prevents
+ * resource leaks when the server shuts down.
+ */
 Server::~Server()
 {
 	for (size_t i = 0; i < _listener._serverSockets.size(); i++)
@@ -28,6 +38,16 @@ Server::~Server()
 	}
 }
 
+/**
+ * @brief Checks for client and CGI timeouts.
+ *
+ * Iterates over all active clients and:
+ * - Terminates CGI processes that exceed CGI_TIMEOUT.
+ * - Closes client connections that exceed CLIENT_TIMEOUT.
+ *
+ * Timed-out connections are properly cleaned up through
+ * the ConnectionManager.
+ */
 void	Server::checkClientTimeOut()
 {
 	time_t	now = time(NULL);
@@ -62,6 +82,14 @@ void	Server::checkClientTimeOut()
 	}
 }
 
+/**
+ * @brief Receives incoming data (requests) from a client socket.
+ *
+ * Delegates the read operation to the ConnectionManager.
+ *
+ * @param clientFd The client socket file descriptor.
+ * @return true if data was successfully received, false on failure or data still in socket.
+ */
 bool	Server::receiveRequest(int clientFd)
 {
 	if (!_connectionManager.receiveData(clientFd, _clients, _cgiPipeToClient))
@@ -69,6 +97,15 @@ bool	Server::receiveRequest(int clientFd)
 	return (true);
 }
 
+/**
+ * @brief Sends a response to a client socket.
+ *
+ * Delegates the write operation to the ConnectionManager.
+ *
+ * @param clientFd The client socket file descriptor.
+ * @param req The associated HTTP request object.
+ * @return true if the response was successfully sent, false on failure.
+ */
 bool	Server::sendResponse(int clientFd, Request& req)
 {
 	if (!_connectionManager.sendData(clientFd, _clients, _cgiPipeToClient, req))
@@ -76,6 +113,14 @@ bool	Server::sendResponse(int clientFd, Request& req)
 	return (true);
 }
 
+/**
+ * @brief Handles an error.
+ *
+ * Cleanup resources when epoll notifies EPOLLERR.
+ * 
+ *
+ * @param clientFd The client socket file descriptor.
+ */
 void	Server::handleError(int clientFd)
 {
 	std::cout << "❌ Error or closing connection for client " << clientFd << std::endl;
@@ -89,16 +134,43 @@ void	Server::handleError(int clientFd)
 	_clients.erase(clientFd);
 }
 
+/**
+ * @brief Processes a new server socket event.
+ *
+ * Accepts and initializes a new client connection associated
+ * with the given server socket file descriptor.
+ *
+ * @param fd The server listening socket file descriptor.
+ */
 void	Server::processServerEvent(int fd)
 {
 	_connectionManager.setUpNewConnection(fd, _clients);
 }
 
+/**
+ * @brief Checks whether a file descriptor belongs to a CGI pipe.
+ *
+ * @param fd The file descriptor to check.
+ * @return true if the descriptor is associated with a CGI pipe, false otherwise.
+ */
 bool	Server::isCgiPipeFd(int fd)
 {
 	return (_cgiPipeToClient.find(fd) != _cgiPipeToClient.end());
 }
 
+/**
+ * @brief Handles CGI execution errors or timeouts.
+ *
+ * If the CGI process timed out, it is terminated and a 504 Gateway Timeout
+ * response is generated. Otherwise, a 500 Internal Server Error response
+ * is prepared.
+ *
+ * The client socket is switched to EPOLLOUT to send the generated
+ * error response.
+ *
+ * @param clientFd The client socket file descriptor.
+ * @param pipeFd The CGI pipe file descriptor associated with the client.
+ */
 void	Server::handleCgiError(int clientFd, int pipeFd)
 {
 	Client& client = _clients[clientFd];
@@ -141,6 +213,18 @@ void	Server::handleCgiError(int clientFd, int pipeFd)
 	}
 }
 
+/**
+ * @brief Handles readable events from a CGI pipe.
+ *
+ * Reads CGI output when available and appends it to the client buffer.
+ * When the CGI process finishes or fails, prepares either a success
+ * response (200 OK) or delegates to error handling.
+ *
+ * The client socket is switched to EPOLLOUT to send the final response.
+ *
+ * @param pipeFd The CGI pipe file descriptor.
+ * @param event The epoll event associated with the pipe.
+ */
 void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 {
 	if (_cgiPipeToClient.find(pipeFd) == _cgiPipeToClient.end())
@@ -186,7 +270,16 @@ void Server::handleCgiOutput(int pipeFd, struct epoll_event& event)
 	_cgiPipeToClient.erase(pipeFd);
 }
 
-
+/**
+ * @brief Starts CGI execution for a client request.
+ *
+ * Launches the CGI script associated with the request, registers
+ * its pipe in epoll for reading, and links it to the client.
+ * If the CGI fails to start, error handling is triggered.
+ *
+ * @param clientFd The client socket file descriptor.
+ * @param req The HTTP request that requires CGI execution.
+ */
 void	Server::startCgiForClient(int clientFd, const Request& req)
 {
 	Client&	client = _clients[clientFd];
@@ -216,6 +309,20 @@ void	Server::startCgiForClient(int clientFd, const Request& req)
 				toString(pipeFd) + ")");
 }
 
+/**
+ * @brief Processes events for a client socket.
+ *
+ * Handles different types of events:
+ * - CGI pipe events are delegated to handleCgiOutput.
+ * - Readable events (EPOLLIN) trigger request reception and
+ *   possibly start CGI execution.
+ * - Writable events (EPOLLOUT) send the prepared response.
+ * - Other events are treated as errors and the connection is closed.
+ *
+ * @param fd The client socket file descriptor.
+ * @param event The epoll event associated with the client.
+ * @param req The HTTP request object associated with the client.
+ */
 void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
 {
 	if (isCgiPipeFd(fd))
@@ -253,6 +360,19 @@ void	Server::processClientEvent(int fd, struct epoll_event &event, Request &req)
 	}
 }
 
+/**
+ * @brief Runs the server and handles incoming connections and events.
+ *
+ * Sets up listening sockets based on configuration, registers them
+ * with epoll, and enters the main event loop.
+ *
+ * In the loop:
+ * - Accepts new connections on listening sockets.
+ * - Processes client events (read/write/CGI).
+ * - Checks for client and CGI timeouts.
+ *
+ * @param req The HTTP request object used for configuration and event handling.
+ */
 void	Server::run(Request &req)
 {
 	int n_fds;

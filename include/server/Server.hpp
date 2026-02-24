@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 15:59:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 09:33:28 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/24 22:17:32 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,6 @@ class Server : Helper {
 		Epoll					_epoll;
 		ConnectionManager		_connectionManager;
 		CgiHandler				_cgiHandler;
-		
-		
 
 		// private helper methods
 		void	checkClientTimeOut();

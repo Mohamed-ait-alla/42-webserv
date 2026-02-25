@@ -6,12 +6,21 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/31 13:13:15 by mdahani           #+#    #+#             */
-/*   Updated: 2026/02/04 15:42:50 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 09:51:27 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Webserv.hpp"
 
+/**
+ * @brief Converts an HTTP status code enum to its standard string representation.
+ *
+ * Maps Webserv::STATUS_CODE values to their corresponding
+ * human-readable status messages (e.g., 200 → "OK").
+ *
+ * @param code The HTTP status code enum.
+ * @return A string describing the status code.
+ */
 std::string Webserv::statusCodeToString(STATUS_CODE code)
 {
     switch (code)

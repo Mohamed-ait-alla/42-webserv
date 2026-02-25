@@ -18,7 +18,7 @@ OBJ_DIR  = obj
 
 # Source files
 SRCS     =  $(SRC_DIR)/main.cpp \
-			$(SRC_DIR)/webserv.cpp \
+			$(SRC_DIR)/Webserv.cpp \
 			$(SRC_DIR)/configParser/configParser.cpp \
 			$(SRC_DIR)/server/Listener.cpp \
 			$(SRC_DIR)/server/Epoll.cpp \

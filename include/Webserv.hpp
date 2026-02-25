@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/15 11:48:16 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 13:34:17 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 09:53:22 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,33 +47,33 @@
 class Webserv {
 
 	public:
+		enum METHOD {
+			GET,
+			POST,
+			DELETE,
+			ELSE,
+		};
 
-    enum METHOD {
-		GET,
-		POST,
-		DELETE,
-		ELSE,
-    };
+		enum STATUS_CODE {
+			OK = 200,
+			CREATED = 201,
+			NO_CONTENT = 204,
 
-    enum STATUS_CODE {
-		OK = 200,
-		CREATED = 201,
-		NO_CONTENT = 204,
+			MOVED_PERMANENTLY = 301,
+			FOUND = 302,
 
-		MOVED_PERMANENTLY = 301,
-		FOUND = 302,
+			BAD_REQUEST = 400,
+			FORBIDDEN = 403,
+			NOT_FOUND = 404,
+			METHOD_NOT_ALLOWED = 405,
+			PAYLOAD_TOO_LARGE = 413,
 
-		BAD_REQUEST = 400,
-		FORBIDDEN = 403,
-		NOT_FOUND = 404,
-		METHOD_NOT_ALLOWED = 405,
-		PAYLOAD_TOO_LARGE = 413,
+			INTERNAL_SERVER_ERROR = 500,
+			BAD_GATEWAY = 502,
+			SOMTHING_WENT_WRONG = 503,
+			GATEWAY_TIMEOUT = 504
+		};
 
-		INTERNAL_SERVER_ERROR = 500,
-		BAD_GATEWAY = 502,
-		SOMTHING_WENT_WRONG = 503,
-		GATEWAY_TIMEOUT = 504
-    };
+		std::string statusCodeToString(STATUS_CODE code);
 
-	std::string statusCodeToString(STATUS_CODE code);
 };

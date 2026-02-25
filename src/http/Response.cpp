@@ -6,21 +6,20 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 10:45:08 by mdahani           #+#    #+#             */
-/*   Updated: 2026/02/19 17:20:50 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 11:35:00 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/http/Response.hpp"
 
-// * Default Constructor
+// Default Constructor
 Response::Response()
     : status_code(OK), statusLine(""), contentType(""), contentLength(""),
       headers(""), indexLocation(-1), isRedirection(false), bodyFd(-1) {
   this->setMimeTypes();
 }
 
-// * Getters & Setters
-// * status code
+// Getters & Setters
 void Response::setStatusCode(STATUS_CODE value) { this->status_code = value; }
 
 Webserv::STATUS_CODE Response::getStatusCode() const {
@@ -33,20 +32,19 @@ void Response::setStatusLine(const std::string httpV,
 }
 std::string Response::getStatusLine() const { return this->statusLine; }
 
-// * server name
+// server name
 std::string Response::getServerName(const Request &req) const {
   return "Server: " + req.config.server_name + "\r\n";
 }
 
-// * content type
+// content type
 void Response::setContentType(const std::string &path) {
   size_t pos = path.rfind(".");
 
   if (pos == std::string::npos) {
     this->contentType =
-        "Content-Type: application/octet-stream\r\n"; // * we dont know what
-    // * is the type of
-    // * content
+        "Content-Type: application/octet-stream\r\n"; // we don't know what is the type of content
+
     return;
   }
 
@@ -57,9 +55,8 @@ void Response::setContentType(const std::string &path) {
 
   if (it == this->getMimeTypes().end()) {
     this->contentType =
-        "Content-Type: application/octet-stream\r\n"; // * we dont know what
-    // * is the type of
-    // * content
+        "Content-Type: application/octet-stream\r\n"; // we don't know what is the type of content
+
     return;
   }
 
@@ -68,7 +65,7 @@ void Response::setContentType(const std::string &path) {
 
 std::string Response::getContentType() const { return this->contentType; }
 
-// * content length
+// content length
 void Response::setContentLength(const size_t &bodyLength) {
   std::stringstream ss;
   ss << bodyLength;
@@ -77,11 +74,11 @@ void Response::setContentLength(const size_t &bodyLength) {
 
 std::string Response::getContentLength() const { return this->contentLength; }
 
-// * headers
+// headers
 std::string Response::getHeaders() const { return this->headers; }
 
 void Response::setHeaders(const Request &req) {
-  // * get content type to decide which headers will send it
+  // get content type to decide which headers will send it
   std::string contentType = req.getRequest().count("Content-Type")
                                 ? req.getRequest().find("Content-Type")->second
                                 : "";
@@ -94,18 +91,18 @@ void Response::setHeaders(const Request &req) {
           ? req.getSession().find("session_id")->second
           : "";
 
-  // * check if is redirection
+  // check if is redirection
   if (this->getIsRedirection() && this->getStatusCode() == FOUND) {
     this->headers = this->getStatusLine() + getServerName(req) + "Location: " +
                     req.config.locations[this->getIndexLocation()].return_to +
                     "\r\n";
     this->setIsRedirection(false);
   } else if (req.method == DELETE && this->getStatusCode() == NO_CONTENT) {
-    // * this for delete response
+    // this for delete response
     this->headers = this->getStatusLine() + getServerName(req) + "\r\n";
   } else if (contentType == "application/x-www-form-urlencoded\r" &&
-             req.method == POST) { // * this for send Cookies
-    // * headers
+             req.method == POST) {
+	 // this for send Cookies headers	
     this->headers = this->getStatusLine() + getServerName(req) +
                     this->getContentType() +
                     "Set-Cookie: session_id=" + sessionIdFromServer + "\r\n" +
@@ -113,57 +110,52 @@ void Response::setHeaders(const Request &req) {
   }
 
   else if (!this->isUserInSession(req, sessionIdFromBrowser) &&
-           this->getStatusCode() == FOUND) { // * check auth by Cookies
+           this->getStatusCode() == FOUND) {
+	// check auth by Cookies
     this->headers = this->getStatusLine() + getServerName(req) +
                     "Location: sign-in.html\r\n";
   }
 
   else if (this->isUserInSession(req, sessionIdFromBrowser) &&
-           this->getStatusCode() == FOUND) { // * check auth by Cookies
+           this->getStatusCode() == FOUND) {
+	// check auth by Cookies
     this->headers =
         this->getStatusLine() + getServerName(req) + "Location: game.html\r\n";
   }
 
   else {
-    // * this for normal response
+    // this for normal response
     this->headers = this->getStatusLine() + getServerName(req) +
                     this->getContentType() + getContentLength() + "\r\n";
   }
 }
 
-// * index location
+// index location
 size_t Response::getIndexLocation() const { return this->indexLocation; }
 
 void Response::setIndexLocation(size_t &value) { this->indexLocation = value; }
 
-// * is redirection
+// is redirection
 bool Response::getIsRedirection() const { return this->isRedirection; }
 
 void Response::setIsRedirection(bool value) { this->isRedirection = value; }
 
-// * Fd of Body
+// Fd of Body
 void Response::setBodyFd(int &fd) { this->bodyFd = fd; }
 int Response::getBodyFd() const { return this->bodyFd; }
 
-// ! Order of response
-// HTTP/1.1 200 OK
-// Server: webserv/1.0
-// Content-Type: text/html
-// Content-Length: 128
 
-// <body>
-
-// * GET METHOD
+// GET METHOD
 void Response::GET_METHOD(Request &req) {
-  // * set status code as default
+  // set status code as default
   this->setStatusCode(OK);
 
-  // * check rules if location is in config file
+  // check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      // * redirection
+      // redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
-        // * Generate response (only headers)
+        // Generate response (only headers)
         this->setIsRedirection(true);
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
@@ -171,18 +163,18 @@ void Response::GET_METHOD(Request &req) {
 
         return;
       }
-      // * check method
+      // check method
       if (this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
               "get")) {
-        // * check if is file or directory
+        // check if is file or directory
         bool isFile =
             this->isFile(req.config.locations[this->getIndexLocation()].root +
                          req.config.locations[this->getIndexLocation()].path);
-        // * generate page of auto index
+        // generate page of auto index
         if (req.config.locations[this->getIndexLocation()].autoindex) {
-          // * check if the path is file because auto index is work only on
-          // * folder
+          // check if the path is file because auto index is work only on
+          // folder
           if (isFile) {
             this->setStatusCode(FORBIDDEN);
             req.path = req.config.error_page[FORBIDDEN];
@@ -193,7 +185,7 @@ void Response::GET_METHOD(Request &req) {
             req.path = this->generatePageOfAutoIndex(req, pathOfAutoIndex);
           }
         }
-        // * check if autoindex is off and we dont have a index html
+        // check if autoindex is off and we dont have a index html
         else if (!req.config.locations[this->getIndexLocation()].autoindex &&
                  req.config.locations[this->getIndexLocation()].index.empty() &&
                  !isFile) {
@@ -206,11 +198,11 @@ void Response::GET_METHOD(Request &req) {
             this->setStatusCode(FORBIDDEN);
             req.path = req.config.error_page[FORBIDDEN];
           } else {
-            // * change root path from config file when i found location and
-            // * method
+            // change root path from config file when i found location and
+            // method
             req.config.root =
                 req.config.locations[this->getIndexLocation()].root;
-            // * change path from config file when i found location and method
+            // change path from config file when i found location and method
             req.path = req.config.locations[this->getIndexLocation()].path +
                        (isFile ? "" : "/") +
                        req.config.locations[this->getIndexLocation()].index;
@@ -227,7 +219,7 @@ void Response::GET_METHOD(Request &req) {
     req.path = req.config.index;
   }
 
-  // * check auth cookies of user
+  // check auth cookies of user
   if (req.path == "/game.html") {
     std::string sessionIdFromBrowser =
         this->parseFormURLEncoded(req.getRequest().count("Cookie")
@@ -252,18 +244,18 @@ void Response::GET_METHOD(Request &req) {
     }
   }
 
-  // * Generate response
+  // Generate response
   this->generateResponse(req);
 }
 
-// * POST METHOD
+// POST METHOD
 void Response::POST_METHOD(Request &req) {
-  // * check rules if location is in config file
+  // check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      // * redirection
+      // redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
-        // * Generate response (only headers)
+        // Generate response (only headers)
         this->setIsRedirection(true);
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
@@ -271,19 +263,19 @@ void Response::POST_METHOD(Request &req) {
 
         return;
       }
-      // * check method
+      // check method
       if (this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
               "post")) {
-        // * check if is file or directory
+        // check if is file or directory
         bool isFile =
             this->isFile(req.config.locations[this->getIndexLocation()].root +
                          req.config.locations[this->getIndexLocation()].path);
-        // * check if the path is file
+        // check if the path is file
         if (!isFile) {
           this->setStatusCode(FORBIDDEN);
           req.path = req.config.error_page[FORBIDDEN];
-          // * Generate response
+          // Generate response
           this->generateResponse(req);
           return;
         }
@@ -291,39 +283,39 @@ void Response::POST_METHOD(Request &req) {
       } else {
         this->setStatusCode(METHOD_NOT_ALLOWED);
         req.path = req.config.error_page[METHOD_NOT_ALLOWED];
-        // * Generate response
+        // Generate response
         this->generateResponse(req);
         return;
       }
     }
   }
 
-  // * get content type to decide which response will send in post method
+  // get content type to decide which response will send in post method
   std::string contentType = req.getRequest().count("Content-Type")
                                 ? req.getRequest().find("Content-Type")->second
                                 : "";
 
-  // ? application/x-www-form-urlencoded
+  // application/x-www-form-urlencoded
   if (contentType == "application/x-www-form-urlencoded\r") {
-    // * set status code as default
+    // set status code as default
     this->setStatusCode(OK);
-    // * set all data in html page
+    // set all data in html page
     this->addDataToBody(req);
     req.path = "post-request-data.html";
-  } else if (contentType.substr(0, 52) == // ? multipart/form-data;
-                                          // ? boundary=----WebKitFormBoundary
+  } else if (contentType.substr(0, 52) == // multipart/form-data;
+                                          // boundary=----WebKitFormBoundary
              "multipart/form-data; boundary=----WebKitFormBoundary") {
     std::string uploadBody = req.getRequest().count("binary-data")
                                  ? req.getRequest().find("binary-data")->second
                                  : "";
-    // * check if the file is empty
+    // check if the file is empty
     if (uploadBody.empty()) {
       this->setStatusCode(FORBIDDEN);
       req.path = req.config.error_page[FORBIDDEN];
     } else if (uploadBody.length() / 1e6 >
                req.config
-                   .client_max_body_size) { // * check file size by config file
-                                            // * convert from bytes to MB
+                   .client_max_body_size) { // check file size by config file
+                                            // convert from bytes to MB
       this->setStatusCode(PAYLOAD_TOO_LARGE);
       req.path = req.config.error_page[PAYLOAD_TOO_LARGE];
     } else {
@@ -337,7 +329,7 @@ void Response::POST_METHOD(Request &req) {
 
       std::string fullPath = (req.config.root + "/uploads/");
 
-      // * check the directory of upload
+      // check the directory of upload
       std::ifstream uploadDir(fullPath.c_str());
       if (!uploadDir.is_open()) {
         this->setStatusCode(FORBIDDEN);
@@ -356,14 +348,14 @@ void Response::POST_METHOD(Request &req) {
 
         outputFile << uploadBody;
 
-        // ! close output file
+        // close output file
         uploadDir.close();
         outputFile.close();
 
-        // * status code
+        // status code
         this->setStatusCode(CREATED);
 
-        // * generate response page
+        // generate response page
         std::ofstream responseFile(
             (req.config.root + "/post-request-upload.html").c_str(),
             std::ios::out | std::ios::trunc);
@@ -409,19 +401,19 @@ void Response::POST_METHOD(Request &req) {
     req.path = req.config.error_page[FORBIDDEN];
   }
 
-  // * Generate response
+  // Generate response
   this->generateResponse(req);
 }
 
-// * DELETE METHOD
+// DELETE METHOD
 void Response::DELETE_METHOD(Request &req) {
 
-  // * check rules if location is in config file
+  // check rules if location is in config file
   if (!req.config.locations.empty()) {
     if (this->thisLocationIsInConfigFile(req, req.path)) {
-      // * redirection
+      // redirection
       if (!req.config.locations[this->getIndexLocation()].return_to.empty()) {
-        // * Generate response (only headers)
+        // Generate response (only headers)
         this->setIsRedirection(true);
         this->setStatusCode(FOUND);
         this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
@@ -430,27 +422,27 @@ void Response::DELETE_METHOD(Request &req) {
         return;
       }
 
-      // * check method
+      // check method
       if (!this->checkAllowMethodsOfLocation(
               req.config.locations[this->getIndexLocation()].allow_methods,
               "delete")) {
         this->setStatusCode(METHOD_NOT_ALLOWED);
         req.path = req.config.error_page[METHOD_NOT_ALLOWED];
-        // * Generate response
+        // Generate response
         this->generateResponse(req);
         return;
       }
     }
   }
 
-  // * check if we have a file or folder
+  // check if we have a file or folder
   std::ifstream file((req.config.root + req.path).c_str());
   if (!file.is_open()) {
     this->setStatusCode(NOT_FOUND);
     req.path = req.config.error_page[NOT_FOUND];
   } else {
     if (std::remove((req.config.root + req.path).c_str()) == 0) {
-      // * set status code
+      // set status code
       this->setStatusCode(NO_CONTENT);
       this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
       this->setHeaders(req);
@@ -460,11 +452,11 @@ void Response::DELETE_METHOD(Request &req) {
     req.path = req.config.error_page[FORBIDDEN];
   }
 
-  // * Generate response
+  // Generate response
   this->generateResponse(req);
 }
 
-// * Status code description
+// Status code description
 std::string Response::statusCodeDescription(STATUS_CODE statusCode) {
   if (statusCode == OK) {
     return "200 OK";
@@ -498,11 +490,11 @@ std::string Response::statusCodeDescription(STATUS_CODE statusCode) {
   return "Unknown Status";
 }
 
-// * count the body length
+// count the body length
 size_t Response::countBodyLength(const std::string &path) {
   struct stat buffer;
 
-  // * get all status of path (size, type, ...)
+  // get all status of path (size, type, ...)
   if (stat(path.c_str(), &buffer) == -1) {
     return 0;
   }
@@ -510,7 +502,7 @@ size_t Response::countBodyLength(const std::string &path) {
   return buffer.st_size;
 }
 
-// * add data to body
+// add data to body
 void Response::addDataToBody(const Request &req) {
   std::string beforRawData =
       "<!DOCTYPE html>\n"
@@ -590,23 +582,23 @@ void Response::addDataToBody(const Request &req) {
       "</body>\n"
       "</html>\n";
 
-  // * get the root path from config file
+  // get the root path from config file
   std::string fullPath(req.config.root);
 
   fullPath.append("/post-request-data.html");
 
-  // ? std::ios::out open the file for write event and if not exist created
-  // ? std::ios::trunc remove all things in file
+  // std::ios::out open the file for write event and if not exist created
+  // std::ios::trunc remove all things in file
   std::ofstream file(fullPath.c_str(), std::ios::out | std::ios::trunc);
   if (!file.is_open()) {
     std::cerr << "file is not open(addDataToBoddy)" << std::endl;
     return;
   }
 
-  // * insert all data in file
+  // insert all data in file
   file << beforRawData;
 
-  // * get post-body
+  // get post-body
   std::string body_post = req.getRequest().count("post-body")
                               ? req.getRequest().find("post-body")->second
                               : "";
@@ -615,7 +607,7 @@ void Response::addDataToBody(const Request &req) {
 
   file << beforParseData;
 
-  // * parse body post
+  // parse body post
   std::map<std::string, std::string> dataOfBody =
       this->parseFormURLEncoded(body_post);
 
@@ -634,13 +626,13 @@ void Response::addDataToBody(const Request &req) {
         "</div>\n";
   }
 
-  // * add raw data
+  // add raw data
   file << parseData;
 
   file << afterPaseData;
 }
 
-// * parse form URL encoded
+// parse form URL encoded
 std::map<std::string, std::string>
 Response::parseFormURLEncoded(const std::string &post_body) {
   std::map<std::string, std::string> result;
@@ -664,9 +656,9 @@ Response::parseFormURLEncoded(const std::string &post_body) {
   return result;
 }
 
-// * check location is in config file
+// check location is in config file
 bool Response::thisLocationIsInConfigFile(Request &req, std::string &location) {
-  // * remove last char if he is '/'
+  // remove last char if he is '/'
   if (!location.empty() && location != "/" &&
       location[location.length() - 1] == '/') {
     location.erase(location.length() - 1);
@@ -681,15 +673,15 @@ bool Response::thisLocationIsInConfigFile(Request &req, std::string &location) {
   return false;
 }
 
-// * check allow methods of location
+// check allow methods of location
 bool Response::checkAllowMethodsOfLocation(
     std::vector<std::string> &allowMethods, std::string method) {
-  // * if the user don't specifec any methods so allow him to use all of them
+  // if the user don't specifec any methods so allow him to use all of them
   if (allowMethods.empty()) {
     return true;
   }
 
-  // * check if method is allowed;
+  // check if method is allowed;
   std::vector<std::string>::iterator it =
       std::find(allowMethods.begin(), allowMethods.end(), method);
   if (it != allowMethods.end()) {
@@ -699,18 +691,18 @@ bool Response::checkAllowMethodsOfLocation(
   return false;
 }
 
-// * generate page of
+// generate page of
 std::string Response::generatePageOfAutoIndex(Request &req,
                                               std::string &pathOfAutoIndex) {
-  // * open directory not file
+  // open directory not file
   DIR *dir =
       opendir(pathOfAutoIndex
-                  .c_str()); // * DIR is data type of directory stream objects
-  if (!dir) {                // * if not open this directory than return null
+                  .c_str()); // DIR is data type of directory stream objects
+  if (!dir) {                // if not open this directory than return null
     return req.config.error_page[NOT_FOUND];
   }
 
-  // * generate html of auto index
+  // generate html of auto index
   std::string beforTitle =
       "<!DOCTYPE html>\n"
       "<html lang=\"en\">\n"
@@ -753,22 +745,22 @@ std::string Response::generatePageOfAutoIndex(Request &req,
       "</html>\n";
   std::string filesAndFolders;
 
-  // * this struct catch every file or folder in directory
+  // this struct catch every file or folder in directory
   struct dirent *entry;
   while ((entry = readdir(dir))) {
     if (entry->d_name[0] == '.')
       continue;
 
-    // * Get file size in bytes
+    // Get file size in bytes
     size_t fileSize =
         this->countBodyLength(pathOfAutoIndex + "/" + entry->d_name);
 
-    // * Convert to KB for display
+    // Convert to KB for display
     size_t fileSizeKB = fileSize / 1024;
     if (fileSize % 1024 != 0)
-      fileSizeKB += 1; // * round up
+      fileSizeKB += 1; // round up
 
-    // * Convert size to string
+    // Convert size to string
     std::stringstream ss;
     ss << fileSizeKB;
     std::string sizeOfEntry = ss.str();
@@ -812,12 +804,12 @@ std::string Response::generatePageOfAutoIndex(Request &req,
     }
   }
 
-  // ! close directory to remove leaks
+  // close directory to remove leaks
   closedir(dir);
 
   std::string htmlOfAutoIndex = beforTitle + title + filesAndFolders + footer;
 
-  // * generate the file to send fd to multiplx
+  // generate the file to send fd to multiplx
   std::string fileName = "/autoindex.html";
   std::ofstream fileOfAutoIndex((req.config.root + fileName).c_str(),
                                 std::ios::out | std::ios::trunc);
@@ -830,7 +822,7 @@ std::string Response::generatePageOfAutoIndex(Request &req,
   return fileName;
 }
 
-// * is start by slash
+// is start by slash
 bool Response::isPathStartBySlash(const std::string &path) {
   if (!path.empty() && path[0] == '/') {
     return true;
@@ -838,16 +830,16 @@ bool Response::isPathStartBySlash(const std::string &path) {
   return false;
 }
 
-// * check if a file
+// check if a file
 bool Response::isFile(std::string path) {
   struct stat buffer;
 
-  // * get all status of path (size, type, ...)
+  // get all status of path (size, type, ...)
   if (stat(path.c_str(), &buffer) == -1) {
     return false;
   }
 
-  // * check the path is file or not
+  // check the path is file or not
   if (S_ISREG(buffer.st_mode)) {
     return true;
   }
@@ -855,9 +847,9 @@ bool Response::isFile(std::string path) {
   return false;
 }
 
-// * is user in session
+// is user in session
 bool Response::isUserInSession(const Request &req, std::string session_id) {
-  // * get session id from server
+  // get session id from server
   std::string sessionIdFromServer =
       req.getSession().count("session_id")
           ? req.getSession().find("session_id")->second
@@ -870,33 +862,33 @@ bool Response::isUserInSession(const Request &req, std::string session_id) {
   return false;
 }
 
-// * Method Not Allowed
+// Method Not Allowed
 void Response::methodNotAllowed(Request &req) {
-  // * set status code
+  // set status code
   this->setStatusCode(BAD_REQUEST);
 
-  // * full path
+  // full path
   req.path = req.config.error_page[BAD_REQUEST];
 
-  // * Generate response
+  // Generate response
   this->generateResponse(req);
 }
 
-// * Generate response
+// Generate response
 void Response::generateResponse(Request &req) {
   std::string fullPath;
 
-  // * root directory
+  // root directory
   std::ifstream rootPath(req.config.root.c_str());
   if (!rootPath.is_open() ||
-      // * check root directory is out of folder of program
+      // check root directory is out of folder of program
       (!req.config.root.empty() && req.config.root[0] == '.' &&
        req.config.root[1] == '.' && req.config.root[2] == '/')) {
     this->setStatusCode(NOT_FOUND);
     fullPath = "defaults/errors/404.html";
   } else {
-    // * handle slash after root path
-    // * we add slash only in path /
+    // handle slash after root path
+    // we add slash only in path /
     if (!this->isPathStartBySlash(req.path)) {
       fullPath = req.config.root;
       fullPath.append("/");
@@ -904,15 +896,15 @@ void Response::generateResponse(Request &req) {
       fullPath = req.config.root;
     }
 
-    // * add path to root directory
+    // add path to root directory
     fullPath.append(req.path);
   }
 
-  // * check the file permissions and if the file exist
+  // check the file permissions and if the file exist
   if (access(fullPath.c_str(), F_OK) == -1 || !this->isFile(fullPath)) {
     this->setStatusCode(NOT_FOUND);
     fullPath = (req.config.root + "/" + req.config.error_page[NOT_FOUND]);
-    // * check if we have error page in root directory
+    // check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
       fullPath = "defaults/errors/404.html";
@@ -921,34 +913,34 @@ void Response::generateResponse(Request &req) {
              access(fullPath.c_str(), W_OK) == -1) {
     this->setStatusCode(FORBIDDEN);
     fullPath = (req.config.root + "/" + req.config.error_page[FORBIDDEN]);
-    // * check if we have error page in root directory
+    // check if we have error page in root directory
     std::ifstream path(fullPath.c_str());
     if (!path.is_open()) {
       fullPath = "defaults/errors/403.html";
     }
   }
 
-  // * status line
+  // status line
   this->setStatusLine(req.httpV, statusCodeDescription(getStatusCode()));
 
-  // * Content Type
+  // Content Type
   this->setContentType(fullPath);
 
-  // * Content Length
+  // Content Length
   this->setContentLength(this->countBodyLength(fullPath));
 
-  // * merge all headers
+  // merge all headers
   this->setHeaders(req);
 
-  // * get fd of body
+  // get fd of body
   int fd = open(fullPath.c_str(), O_RDONLY);
   this->setBodyFd(fd);
 
-  // ! close root path
+  // close root path
   rootPath.close();
 }
 
-// * Response
+// Response
 void Response::response(Request &req) {
   if (req.method == GET) {
     this->GET_METHOD(req);

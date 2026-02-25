@@ -6,21 +6,25 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/14 13:13:08 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/20 15:55:44 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 09:47:17 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "server/Epoll.hpp"
-#define CLIENT_TIMEOUT 30
+#define CLIENT_TIMEOUT 30 // 30s
+
+
+// ************************************************************************** //
+//                                 Client Class                               //
+// ************************************************************************** //
 
 class Client : public Webserv {
 
 	public:
 		Client();
 		Client(int clientFd);
-		// ~Client();
 
 		void					appendRequest(const char *buffer, size_t length);
 		void					updateLastActivity();

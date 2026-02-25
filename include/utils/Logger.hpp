@@ -6,7 +6,7 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/28 09:39:18 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/01 13:09:04 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 10:37:45 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #define CLR_CYAN        "\033[36m"
 #define CLR_GRAY        "\033[90m"
 #define CLR_BOLD_YELLOW "\033[1;33m"
+
 
 enum LogTag {
     LOG_INFO,

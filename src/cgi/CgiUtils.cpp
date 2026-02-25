@@ -6,61 +6,81 @@
 /*   By: mait-all <mait-all@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 11:04:26 by mait-all          #+#    #+#             */
-/*   Updated: 2026/02/04 18:11:05 by mait-all         ###   ########.fr       */
+/*   Updated: 2026/02/25 10:24:16 by mait-all         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/cgi/CgiUtils.hpp"
 
-std::string ft_trim(const std::string& str) {
-    size_t start = str.find_first_not_of(" \t\r\n");
-    if (start == std::string::npos)
-        return "";
-    size_t end = str.find_last_not_of(" \t\r\n");
-    return str.substr(start, end - start + 1);
+/**
+ * @brief Trims leading and trailing whitespace characters from a string.
+ *
+ * Removes spaces, tabs, carriage returns, and newlines from both ends.
+ *
+ * @param str The input string to trim.
+ * @return A new string with no leading or trailing whitespace.
+ */
+std::string	ft_trim(const std::string& str) {
+	size_t start = str.find_first_not_of(" \t\r\n");
+	if (start == std::string::npos)
+		return "";
+	size_t end = str.find_last_not_of(" \t\r\n");
+	return str.substr(start, end - start + 1);
 }
 
+/**
+ * @brief Parses raw CGI headers into a key-value map.
+ *
+ * - Splits the input string by lines.
+ * - Ignores empty lines or lines without a colon.
+ * - Trims whitespace from names and values.
+ * - Converts header names to lowercase.
+ *
+ * @param rawHeaders The raw CGI header string.
+ * @return A map of header names to values.
+ */
 std::map<std::string, std::string>	parseCgiHeaders(const std::string& rawHeaders) {
-    std::map<std::string, std::string> headers;
-    std::istringstream stream(rawHeaders);
-    std::string line;
-    
-    while (std::getline(stream, line)) {
-        // Remove \r if present (handles both \n and \r\n)
-        if (!line.empty() && line[line.length() - 1] == '\r') {
-            line = line.substr(0, line.length() - 1);
-        }
-        
-        // Skip empty lines
-        if (line.empty())
-            continue;
-        
-        // Find the colon separator
-        size_t colon_pos = line.find(':');
-        if (colon_pos == std::string::npos) {
-            // Malformed header - skip it
-            continue;
-        }
-        
-        // Extract header name and value
-        std::string header_name = ft_trim(line.substr(0, colon_pos));
-        std::string header_value = ft_trim(line.substr(colon_pos + 1));
-        
-        // Convert header name to lowercase for case-insensitive comparison
-        // (HTTP headers are case-insensitive)
-        for (size_t i = 0; i < header_name.length(); i++) {
-            header_name[i] = std::tolower(header_name[i]);
-        }
-        
-        // Store the header
-        if (!header_name.empty()) {
-            headers[header_name] = header_value;
-        }
-    }
-    
-    return headers;
+	std::map<std::string, std::string> headers;
+	std::istringstream stream(rawHeaders);
+	std::string line;
+		
+	while (std::getline(stream, line)) {
+
+		if (!line.empty() && line[line.length() - 1] == '\r') {
+			line = line.substr(0, line.length() - 1);
+		}
+
+		if (line.empty())
+			continue;
+
+		size_t colon_pos = line.find(':');
+		if (colon_pos == std::string::npos)
+			continue;
+
+		std::string header_name = ft_trim(line.substr(0, colon_pos));
+		std::string header_value = ft_trim(line.substr(colon_pos + 1));
+
+		for (size_t i = 0; i < header_name.length(); i++) {
+			header_name[i] = std::tolower(header_name[i]);
+		}
+
+		if (!header_name.empty()) {
+			headers[header_name] = header_value;
+		}
+	}
+
+	return headers;
 }
 
+/**
+ * @brief Returns the file path of a custom or default error page.
+ *
+ * Checks if a custom error page exists for the given status code
+ * under "www/errors/". If not, falls back to the default page.
+ *
+ * @param statusCode The HTTP status code (e.g., 500, 504).
+ * @return File path to the corresponding error page.
+ */
 std::string	getErrorPagePath(int statusCode)
 {
 	std::string	customizedErrorPage;
@@ -83,6 +103,15 @@ std::string	getErrorPagePath(int statusCode)
 	return ("");
 }
 
+/**
+ * @brief Loads the content of the error page for a given status code.
+ *
+ * Determines the correct error page path (custom or default)
+ * and reads its contents into a string.
+ *
+ * @param statusCode The HTTP status code (e.g., 500, 504).
+ * @return The content of the error page as a string.
+ */
 std::string	loadErrorPage(int statusCode)
 {
 	std::string	path;
@@ -97,6 +126,16 @@ std::string	loadErrorPage(int statusCode)
 	return (Helper::readFile(path));
 }
 
+/**
+ * @brief Parses raw CGI output into headers and body.
+ *
+ * Splits the output by the header-body separator (`\r\n\r\n` or `\n\n`),
+ * parses the headers, and ensures `Content-Type` and `Content-Length`
+ * are set if missing.
+ *
+ * @param raw The raw output string from a CGI script.
+ * @return A CgiResult struct containing parsed headers and body.
+ */
 CgiResult	parseCgiOutput(const std::string& raw)
 {
 	CgiResult	result;
@@ -131,6 +170,18 @@ CgiResult	parseCgiOutput(const std::string& raw)
 	return (result);
 }
 
+/**
+ * @brief Builds a complete HTTP response from CGI results.
+ *
+ * Constructs the HTTP status line, headers, and body into a single string
+ * suitable for sending to the client.
+ *
+ * @param statusCode The HTTP status code (e.g., 200, 500, 504).
+ * @param reason The reason phrase corresponding to the status code.
+ * @param headers Map of HTTP headers to include.
+ * @param body The body of the response.
+ * @return A formatted HTTP response string.
+ */
 std::string	buildCgiResponse(int statusCode,
 										const std::string& reason,
 										const std::map<std::string, std::string>& headers,
